@@ -1,0 +1,1270 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="생년월일로 나의 소울카드를 찾고, 친구와 소울메이트 궁합을 확인해 보세요.">
+<meta property="og:title" content="MYO TAROT · 생일 입력해 줘!">
+<meta property="og:description" content="생년월일만 넣으면 나의 소울카드와 둘의 소울메이트 궁합이 바로 나와요.">
+<meta property="og:image" content="https://heranzang.github.io/myotarot/assets/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:type" content="website">
+<style>*,*::before,*::after{box-sizing:border-box}html,body{margin:0;padding:0}</style>
+</head>
+<body>
+<title>MYO TAROT V10</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&family=Noto+Serif+KR:wght@500;600;700&display=swap">
+<style>
+/* Layout: one narrow mobile column (max 480px) on midnight; gold hairlines frame cards, the chosen master's color tints accents. Deliberately dark-only, like the brand. */
+:root{
+  color-scheme:dark;
+  --night:#0B0B0D;
+  --navy:#111726;
+  --surface:#15151B;
+  --surface-2:#1C1C24;
+  --line:rgba(217,180,100,.22);
+  --line-strong:rgba(217,180,100,.5);
+  --gold:#D9B464;
+  --gold-light:#F2DFA8;
+  --ivory:#F6F1E4;
+  --muted:#B4AC9C;
+  --subtle:#8A8475;
+  --danger:#F0A090;
+  --noel:#8E63D2; --noel-deep:#3A2559;
+  --haku:#E2C04A; --haku-deep:#4A5230;
+  --rion:#B5463F; --rion-deep:#4E1F1E;
+  --m:var(--noel); --m-deep:var(--noel-deep);
+  --f-display:"Noto Serif KR","Nanum Myeongjo",Georgia,serif;
+  --ease-out:cubic-bezier(.23,1,.32,1);
+  --f-voice:"Noto Serif KR","Nanum Myeongjo",Georgia,serif;
+  --f-body:"Noto Sans KR",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --r:14px;
+}
+:root[data-master="haku"]{--m:var(--haku);--m-deep:var(--haku-deep)}
+:root[data-master="rion"]{--m:var(--rion);--m-deep:var(--rion-deep)}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--night);color:var(--ivory);font-family:var(--f-body);font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased;word-break:keep-all;overflow-wrap:anywhere}
+
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+
+.app{position:relative;width:min(100%,480px);margin:0 auto;padding-inline:16px;padding-block:14px 56px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:6px 14px}
+.topbar img{height:22px;width:auto;display:block}
+.proto-chip{font-size:12px;letter-spacing:.04em;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:4px 10px;white-space:nowrap}
+.ms-wrap{display:flex;align-items:center;gap:8px}
+.ms-label{font-size:12px;letter-spacing:.04em;color:var(--gold);font-weight:700;text-align:right;line-height:1.25}
+.master-switch{display:flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--m);border-radius:99px;padding:3px 12px 3px 3px;font-size:14px;font-weight:700;color:var(--ivory);transition:border-color .4s}
+.master-switch img{width:30px;height:30px;border-radius:50%;object-fit:cover;object-position:50% 15%;background:var(--m-deep)}
+
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;padding:6px;margin-inline:-6px;background:color-mix(in srgb,var(--night) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.tab{border:0;background:transparent;color:var(--muted);font-size:13px;font-weight:700;padding:10px 2px;border-radius:10px;white-space:nowrap}
+.tab[aria-current="page"]{background:var(--surface-2);color:var(--gold-light);box-shadow:inset 0 -2px 0 var(--gold)}
+
+.view{display:none;padding-top:20px}
+.view.active{display:grid;gap:18px}
+.eyebrow{font-family:var(--f-display);font-style:italic;color:var(--gold);font-size:13px;letter-spacing:.04em;margin:0}
+h1,h2,h3{margin:0;text-wrap:balance;line-height:1.3}
+h2{font-size:23px;font-weight:800;letter-spacing:-.02em}
+h3{font-size:16px;font-weight:800}
+.lead{color:var(--muted);font-size:14px;margin:4px 0 0}
+
+/* master carousel */
+.masters{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;margin-inline:-16px;padding:2px 16px 8px;scrollbar-width:none}
+.masters::-webkit-scrollbar{display:none}
+.mtile{position:relative;flex:0 0 72%;max-width:320px;display:block;padding:0;border:0;background:transparent;scroll-snap-align:center;color:inherit;transition:opacity 200ms var(--ease-out),filter 200ms var(--ease-out)}
+.mtile .art{position:relative;display:block;width:100%;aspect-ratio:2/3;border-radius:16px;overflow:hidden;border:2px solid transparent;transition:border-color 200ms var(--ease-out),transform 200ms var(--ease-out)}
+.mtile img{display:block;width:100%;height:100%;object-fit:contain;background:var(--surface)}
+.mtile[aria-pressed="false"]{opacity:.5;filter:saturate(.6)}
+.mtile[aria-pressed="false"] .art::after{content:"탭해서 선택";position:absolute;left:50%;bottom:16%;transform:translateX(-50%);font-size:13px;font-weight:700;color:var(--ivory);background:rgba(11,11,13,.82);border:1px solid rgba(246,241,228,.5);padding:6px 14px;border-radius:99px;white-space:nowrap}
+.mtile[aria-pressed="true"] .art{border-color:var(--gold);transform:translateY(-3px)}
+.direction{display:grid;gap:6px}
+.direction .lead{color:#D8D1C2}
+.direction .tap{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--gold-light)}
+.minfo{display:grid;gap:12px;border:1px solid var(--m);border-radius:var(--r);padding:16px;background:color-mix(in srgb,var(--m) 10%,var(--surface));transition:border-color .3s var(--ease-out),background-color .3s var(--ease-out)}
+.minfo-head p{margin:0;font-size:16px;line-height:1.5;color:var(--muted)}.minfo-head p b{display:inline;font-size:16px;color:var(--m);font-weight:800}
+.minfo-head img{width:52px;height:52px;border-radius:50%;object-fit:cover;object-position:50% 15%;border:2px solid var(--m);background:var(--m-deep)}
+.minfo-head small{display:block;font-size:12px;letter-spacing:.04em;color:var(--m);font-weight:800}
+.minfo-head b{display:block;font-size:19px;line-height:1.3}
+.minfo-head span{display:block;font-size:13px;color:var(--muted)}
+.minfo .mintro{margin:0;font-size:15px;line-height:1.75;color:#E6E0D2}
+.minfo dl div{display:grid;grid-template-columns:84px minmax(0,1fr);gap:8px;font-size:13.5px}
+.minfo dt{color:var(--gold);font-weight:800}
+.minfo dd{margin:0;color:#E6E0D2}
+.minfo .quote{margin:0;font-size:14.5px;padding:10px 12px;border-radius:10px;background:rgba(11,11,13,.45);border-left:3px solid var(--m)}
+.mpick{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.mpick button{display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:6px;font-size:12.5px;font-weight:700;color:var(--muted)}
+.mpick button img{width:26px;height:26px;border-radius:50%;object-fit:cover;object-position:50% 15%}
+.mpick button[aria-pressed="true"]{border-color:var(--gold);color:var(--ivory);background:var(--surface-2)}
+
+
+/* panels & forms */
+.panel{background:var(--surface);border:0;border-radius:var(--r);padding:18px;display:grid;gap:14px}
+.field{display:grid;gap:6px;min-width:0}
+.field label{font-size:12.5px;font-weight:700;color:var(--muted)}
+.input,textarea.input{width:100%;min-width:0;background:var(--night);border:1px solid #3A3528;border-radius:11px;padding:12px 13px;font-size:16px;color:var(--ivory)}
+.input:focus{border-color:var(--gold);outline:none;box-shadow:0 0 0 3px rgba(217,180,100,.15)}
+.input::placeholder{color:#8C8677}
+.input.date{font-variant-numeric:tabular-nums;letter-spacing:.04em}
+textarea.input{min-height:120px;resize:vertical;line-height:1.7}
+.row2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:10px}
+.err{color:var(--danger);font-size:13px;margin:0;min-height:0}
+.err:empty{display:none}
+.hint{font-size:12px;color:var(--subtle);margin:0}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:12px 20px;border-radius:99px;transition:transform 160ms var(--ease-out),background-color 160ms ease;border:0;font-weight:800;font-size:15px;width:100%}
+.btn-gold{background:var(--gold);color:#1A140A}
+.btn-gold:hover{background:var(--gold-light)}
+.btn:active:not(:disabled),.tab:active,.mpick button:active,.topics button:active,.master-switch:active,.seg button:active{transform:scale(.97)}
+.tab,.mpick button,.topics button,.master-switch,.seg button{transition:transform 160ms var(--ease-out),background-color 160ms ease,color 160ms ease}
+.btn-ghost{background:transparent;border:1px solid var(--line-strong);color:var(--gold-light)}
+.btn-quiet{background:var(--surface-2);color:var(--ivory)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.btn-row .btn{font-size:14px;word-break:keep-all}
+#stageActions{grid-template-columns:1fr}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px}
+.seg button{border:0;background:transparent;color:var(--muted);font-weight:700;padding:9px;border-radius:9px}
+.seg button[aria-pressed="true"]{background:var(--gold);color:#1A140A}
+
+/* tarot card */
+.tcard{position:relative;aspect-ratio:2/3;width:100%;border-radius:10px;padding:8%;display:flex;flex-direction:column;align-items:center;justify-content:space-between;text-align:center;
+  background:radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--m) 30%,transparent),transparent 60%),linear-gradient(180deg,var(--navy),#0C0E16);
+  border:1px solid var(--line-strong);box-shadow:inset 0 0 0 4px var(--night),inset 0 0 0 5px rgba(217,180,100,.35)}
+.tcard .num{font-family:var(--f-display);color:var(--gold);font-size:clamp(11px,3.2vw,14px);letter-spacing:.04em}
+.tcard .glyph{font-size:clamp(28px,11vw,52px);color:var(--gold-light);line-height:1;text-shadow:0 0 18px color-mix(in srgb,var(--m) 70%,transparent)}
+.tcard .nm{font-weight:800;font-size:clamp(11px,3.4vw,15px);line-height:1.3;color:var(--ivory)}
+.tcard.art{padding:0;overflow:hidden;background:var(--navy);box-shadow:none;border:1px solid var(--line-strong);justify-content:flex-end}
+.tcard.art img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.tcard.art .lbl{position:absolute;left:6%;right:6%;bottom:6.5%;display:flex;align-items:baseline;justify-content:center;gap:.35em;padding:.35em .3em;border-radius:4px;background:#F6F1E4;color:#3A2418;font-weight:800;font-size:clamp(9px,2.9vw,13px);line-height:1.2;text-align:center;box-shadow:0 0 0 1px rgba(90,60,30,.35)}
+.tcard.art .lbl b{font-family:var(--f-display);font-weight:700;color:#8A5A2B}
+.tcard.back{background:repeating-linear-gradient(45deg,rgba(217,180,100,.08) 0 6px,transparent 6px 12px),linear-gradient(180deg,#1A1626,#0E0C16);justify-content:center}
+.tcard.back::after{content:"✦";color:var(--gold);font-size:28px}
+
+/* soul result */
+.soul-hero{display:grid;gap:12px;justify-items:center;text-align:center}
+.soul-hero .tcard{width:100%}
+.soul-hero h3{font-size:28px}
+.soul-hero .tags{justify-content:center}
+.tcard.art.big .lbl{font-size:clamp(14px,4.6vw,20px);bottom:6.8%}
+.ring{position:relative;overflow:hidden;margin-inline:-16px;touch-action:pan-y;--rw:280px;height:calc(var(--rw) * 1.5 + 56px)}
+.ring-card{position:absolute;left:0;top:6px;width:var(--rw);will-change:transform,opacity;transform-origin:50% 50%}
+.ring-card .tcard{width:100%;box-shadow:0 12px 28px rgba(0,0,0,.5)}
+.ring-cap{position:absolute;left:0;right:0;bottom:10px;margin:0;text-align:center;font-size:15px;font-weight:700;color:var(--gold-light)}
+.ring-cap:empty{display:none}
+.ring.done .ring-card:not(.chosen){opacity:0!important;transition:opacity .5s}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-size:12px;color:var(--gold-light);border:1px solid var(--line);border-radius:99px;padding:2px 9px}
+.mvoice{display:grid;margin-inline:-18px}
+.mvoice img{display:block;width:100%;aspect-ratio:5/4;object-fit:cover;object-position:50% 6%;background:radial-gradient(ellipse at 50% 70%,color-mix(in srgb,var(--m) 45%,transparent),transparent 70%),var(--surface);transition:opacity .25s}
+.mvoice img[data-m="noel"]{background:radial-gradient(ellipse at 50% 70%,rgba(142,99,210,.45),transparent 70%),var(--surface)}
+.mvoice img[data-m="haku"]{background:radial-gradient(ellipse at 50% 70%,rgba(226,192,74,.4),transparent 70%),var(--surface)}
+.mvoice img[data-m="rion"]{background:radial-gradient(ellipse at 50% 70%,rgba(181,70,63,.45),transparent 70%),var(--surface)}
+.mvoice .bubble{margin:-48px 18px 0;position:relative;box-shadow:0 10px 24px rgba(0,0,0,.4)}
+.bubble{position:relative;background:var(--surface-2);border:1px solid color-mix(in srgb,var(--m) 45%,transparent);border-radius:14px 14px 14px 4px;padding:12px 14px;min-width:0}
+.bubble.v-noel{border-radius:4px;border-color:var(--noel);background:#17141F}
+.bubble.v-noel p{font-family:var(--f-body);font-weight:500;letter-spacing:-.01em}
+.bubble.v-haku{border-radius:22px;border-color:var(--haku);border-width:2px;background:#1C1B14}
+.bubble.v-haku p{font-family:var(--f-body);font-weight:600;font-size:15.5px}
+.bubble.v-rion{border-radius:16px 16px 16px 4px;border-color:var(--rion);background:#1E1616}
+.bubble.v-rion p{font-family:var(--f-voice);line-height:1.9}
+.v-noel .who{color:#B595EA}.v-haku .who{color:var(--haku)}.v-rion .who{color:#E08A82}
+.bubble .who{font-size:12.5px;letter-spacing:.02em;color:var(--m);font-weight:700}
+.bubble p{margin:4px 0 0;font-family:var(--f-voice);font-size:15px;line-height:1.75}
+.dl{display:grid;gap:12px;margin:0}
+.dl div{display:grid;gap:2px}
+.dl dt{font-size:12px;font-weight:800;color:var(--gold);letter-spacing:.04em}
+.dl dd{margin:0;font-size:14.5px;color:#E6E0D2}
+
+/* compat */
+.pair-title{text-align:center;display:grid;gap:2px}
+.pair-title h3{font-family:var(--f-voice);font-size:22px;color:var(--gold-light);font-weight:600}
+.pair-title small{color:var(--muted);font-size:12.5px}
+.pair-cards{display:grid;grid-template-columns:minmax(0,1fr) 28px minmax(0,1fr);align-items:center;gap:6px;max-width:300px;margin:0 auto;width:100%}
+.pair-cards .join{text-align:center;color:var(--gold);font-size:20px}
+.score{display:flex;justify-content:space-between;align-items:center;gap:12px;border:1px solid var(--line-strong);border-radius:12px;padding:12px 14px;background:linear-gradient(90deg,color-mix(in srgb,var(--m) 14%,transparent),transparent)}
+.score b{font-size:13px;display:block}
+.score small{font-size:12px;color:var(--muted)}
+.score .pts{font-family:var(--f-display);font-size:34px;color:var(--gold-light);font-variant-numeric:tabular-nums;line-height:1}
+.score .pts span{font-size:13px;color:var(--muted);margin-left:2px;font-family:var(--f-body)}
+.save-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+.save-row .btn{width:auto}
+.member{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr) auto;gap:8px;align-items:end}
+.member .rm{border:0;background:transparent;color:var(--subtle);font-size:12px;padding:12px 4px;text-decoration:underline}
+.team-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:10px}
+.team-grid figure{margin:0;display:grid;gap:6px;text-align:center;font-size:12px}
+.team-grid figcaption b{display:block;font-size:13px}
+.team-grid figcaption span{color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips span{font-size:12px;background:var(--surface-2);border-radius:99px;padding:3px 10px;color:var(--gold-light)}
+details.tp{border-top:1px solid var(--line);padding-top:10px}
+details.tp summary{cursor:pointer;font-weight:700;font-size:14px;display:flex;justify-content:space-between;gap:8px}
+details.tp summary span{color:var(--gold);font-size:12px;font-weight:700}
+details.tp p{font-size:13.5px;color:#E0DACB;margin:8px 0 0}
+
+/* vault */
+.vault-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.vault-list{display:grid;gap:8px;list-style:none;margin:0;padding:0}
+.vitem{display:grid;grid-template-columns:32px minmax(0,1fr) auto auto;gap:10px;align-items:center;background:var(--surface-2);border-radius:11px;padding:10px 12px}
+.vitem .rank{font-family:var(--f-display);color:var(--gold);font-size:18px;text-align:center}
+.vitem .nm{font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vitem .sub{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vitem .pts{font-family:var(--f-display);font-size:20px;color:var(--gold-light);font-variant-numeric:tabular-nums}
+.vitem .del{border:0;background:transparent;color:var(--subtle);font-size:18px;padding:4px}
+.empty{font-size:13px;color:var(--subtle);text-align:center;padding:12px;border:1px dashed var(--line);border-radius:11px;margin:0}
+
+/* daily */
+.daily-card{display:grid;grid-template-columns:110px minmax(0,1fr);gap:16px;align-items:center}
+
+/* deep reading */
+.topics{display:flex;flex-wrap:wrap;gap:6px}
+.topics button{border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:99px;padding:5px 12px;font-size:12.5px}
+.topics button[aria-pressed="true"]{border-color:var(--gold);color:var(--gold-light)}
+.price{display:flex;justify-content:space-between;align-items:center;gap:12px;border:1px solid var(--line-strong);border-radius:12px;padding:12px 14px}
+.price .amt{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums}
+.price s{color:var(--subtle);font-size:13px;margin-left:6px}
+.price small{display:block;font-size:12px;color:var(--muted)}
+.price .btn{width:auto;min-width:120px}
+.test-note{font-size:12px;color:var(--gold-light);background:rgba(217,180,100,.08);border-radius:9px;padding:8px 10px;margin:0}
+.stage{position:relative;display:grid;gap:14px}
+.log{border-top:1px solid var(--line);padding-top:10px}
+.log summary{cursor:pointer;font-size:13px;font-weight:700;color:var(--muted)}
+.log .narr{margin-top:10px}
+.log .bubble p{font-size:14px}
+.board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:auto auto;gap:10px;max-width:330px;width:100%;margin:0 auto;position:relative}
+.slot{display:grid;gap:4px;text-align:center;min-width:0}
+.slot .pl{font-size:12px;color:var(--muted);line-height:1.3}
+.slot.p4{grid-column:2;grid-row:1}
+.slot.p1{grid-column:1;grid-row:2}.slot.p2{grid-column:2;grid-row:2}.slot.p3{grid-column:3;grid-row:2}
+.slot .tcard{opacity:0;transform:translateY(14px) scale(.96);transition:opacity 280ms var(--ease-out),transform 280ms var(--ease-out),box-shadow 200ms ease}
+.slot.in .tcard{opacity:1;transform:none}
+.slot.focus .tcard{box-shadow:0 0 0 2px var(--gold),0 0 24px color-mix(in srgb,var(--m) 60%,transparent)}
+.deck{display:flex;justify-content:center;gap:0;height:120px;align-items:center}
+.deck .tcard{width:70px;margin-inline:-18px;animation:shuffle 1s ease-in-out infinite alternate}
+.deck .tcard:nth-child(2){animation-delay:.15s}.deck .tcard:nth-child(3){animation-delay:.3s}
+@keyframes shuffle{from{transform:translateY(0) rotate(-6deg)}to{transform:translateY(-10px) rotate(6deg)}}
+.narr{display:grid;gap:10px}
+.narr .bubble{border-radius:14px}
+.step{display:block;font-size:12px;color:var(--gold);font-weight:800;letter-spacing:.04em}
+.narr .step{display:block;font-size:12px;color:var(--gold);font-weight:800;letter-spacing:.04em}
+.summary{border-top:1px solid var(--line);padding-top:14px;display:grid;gap:8px}
+.summary p{margin:0;font-family:var(--f-voice);font-size:15px;line-height:1.85}
+.extras{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:10px;max-width:330px;width:100%;margin:0 auto;border-top:1px dashed var(--line);padding-top:12px}
+.extra{display:grid;gap:4px;text-align:center;font-size:12px;line-height:1.35;color:var(--muted);min-width:0}
+.extra b{color:var(--gold-light);font-weight:700}
+.extra .tcard{animation:pop .45s ease both;transition:box-shadow .3s}
+.extra.focus .tcard{box-shadow:0 0 0 2px var(--gold),0 0 20px color-mix(in srgb,var(--m) 60%,transparent)}
+.navrow{display:grid;grid-template-columns:1fr 1.6fr;gap:8px}
+@keyframes pop{from{opacity:0;transform:translateY(12px) scale(.94)}to{opacity:1;transform:none}}
+.fu{background:var(--surface-2)}
+.fu .topics button{font-size:12px}
+.add-price{font-size:12px;color:var(--muted)}
+.safety{border:1px solid var(--danger);border-radius:var(--r);padding:16px;display:grid;gap:8px;background:rgba(240,160,144,.06)}
+.safety p{margin:0;font-size:14px}
+.safety .tel{font-size:18px;font-weight:800;user-select:all;font-variant-numeric:tabular-nums}
+.notice{font-size:12px;color:var(--subtle);margin:0;line-height:1.6}
+.pubswitch{display:grid;grid-template-columns:44px minmax(0,1fr);gap:12px;align-items:center;cursor:pointer}
+.pubswitch input{position:absolute;opacity:0;width:1px;height:1px}
+.pubswitch .sw{width:44px;height:26px;border-radius:99px;background:var(--surface-2);position:relative;transition:background-color .25s var(--ease-out)}
+.pubswitch .sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--muted);transition:transform .25s var(--ease-out),background-color .25s var(--ease-out)}
+.pubswitch input:checked+.sw{background:var(--gold)}
+.pubswitch input:checked+.sw::after{transform:translateX(18px);background:#1A140A}
+.pubswitch input:focus-visible+.sw{box-shadow:0 0 0 3px rgba(217,180,100,.35)}
+.pubtxt b{display:block;font-size:14px}.pubtxt small{display:block;font-size:12px;color:var(--subtle);line-height:1.5}
+.safety.soft{border:0;background:var(--surface)}
+.board-wrap{display:grid;gap:10px;margin-top:12px}
+.posts{display:grid;gap:10px}
+.post{background:var(--surface);border-radius:var(--r);padding:16px;display:grid;gap:10px}
+.post-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px}
+.post-meta img{width:28px;height:28px;border-radius:50%;object-fit:cover;object-position:50% 15%;background:var(--surface-2)}
+.post-meta b{font-size:13.5px}.post-meta span{color:var(--subtle)}
+.post-meta .post-state{margin-left:auto;color:var(--gold-light);font-weight:700}
+.post-q{margin:0;font-size:15.5px;font-weight:700;line-height:1.55}
+.post-sum{margin:0;font-size:14px;line-height:1.75;color:#E6E0D2;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.post-more summary{cursor:pointer;font-size:13px;font-weight:700;color:var(--gold-light);list-style:none}
+.post-more summary::-webkit-details-marker{display:none}
+.post-more summary::after{content:" ›";display:inline-block;transition:transform .2s var(--ease-out)}
+.post-more[open] summary::after{transform:rotate(90deg)}
+.post-more[open]~.post-sum,.post:has(.post-more[open]) .post-sum{-webkit-line-clamp:unset}
+.post-line{display:grid;gap:2px;margin-top:10px}
+.post-line b{font-size:12.5px;color:var(--gold-light)}
+.post-line p{margin:0;font-size:13.5px;line-height:1.7;color:var(--muted)}
+.post-toggle{justify-self:start}
+.hist{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.hist li{font-size:13px;background:var(--surface-2);border-radius:10px;padding:8px 12px;display:grid;gap:2px}
+.hist li span{color:var(--muted);font-size:12px}
+
+/* network */
+.netmap{width:100%;max-width:340px;margin:0 auto;display:block}
+.netmap text{font-family:var(--f-body)}
+.progress{display:grid;gap:8px}
+.bar{height:8px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-light));border-radius:99px;transition:width .5s}
+.rewards{display:grid;gap:6px;list-style:none;margin:0;padding:0}
+.rewards li{display:flex;justify-content:space-between;gap:10px;font-size:13px;background:var(--surface-2);border-radius:10px;padding:9px 12px}
+.rewards li b{color:var(--gold-light)}
+.rewards li.done{outline:1px solid var(--gold)}
+.rewards li.done span{color:var(--gold)}
+.proofpop{position:fixed;right:12px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:40;display:flex;align-items:flex-start;gap:2px;max-width:min(300px,calc(100vw - 24px));background:rgba(28,27,34,.96);backdrop-filter:blur(8px);border-radius:16px;padding:10px 6px 10px 10px;box-shadow:0 10px 30px rgba(0,0,0,.45);opacity:0;transform:translateY(14px);transition:opacity 320ms var(--ease-out),transform 320ms var(--ease-out)}
+.proofpop.show{opacity:1;transform:none}
+.pp-body{display:flex;align-items:center;gap:10px;border:0;background:transparent;color:inherit;text-align:left;padding:0;cursor:pointer}
+.pp-body img{width:38px;height:38px;border-radius:50%;object-fit:cover;object-position:50% 15%;background:var(--surface-2);flex:0 0 38px}
+.pp-body b{display:block;font-size:13.5px;line-height:1.4;font-weight:700;color:var(--ivory)}
+.pp-body b em{font-style:normal;color:var(--gold-light);font-weight:800}
+.pp-body small{display:block;font-size:11.5px;color:var(--subtle);margin-top:2px}
+.pp-x{border:0;background:transparent;color:var(--subtle);font-size:18px;line-height:1;padding:2px 6px}
+@media (prefers-reduced-motion:reduce){.proofpop{transition:opacity 200ms linear;transform:none}}
+.proof{margin:0;display:flex;align-items:center;justify-content:center;gap:7px;font-size:12.5px;color:var(--muted)}
+.proof b{color:var(--gold-light);font-weight:800}
+.proof .live{width:7px;height:7px;border-radius:50%;background:#7FD18B;box-shadow:0 0 0 3px rgba(127,209,139,.18)}
+.proof .ex{font-size:10.5px;color:var(--subtle);background:var(--surface-2);border-radius:99px;padding:1px 6px}
+.btn[aria-disabled="true"]{opacity:.4}
+.vmid{border:0;background:transparent;text-align:left;padding:0;color:inherit;min-width:0;cursor:pointer;font:inherit}
+.member.me{grid-template-columns:minmax(0,1fr) minmax(0,1.3fr)}
+.ask{display:grid;gap:12px;background:var(--surface-2);border-radius:var(--r);padding:14px}
+.ask b{font-size:15px}
+.askmsg{margin:0;white-space:pre-wrap;font-size:13.5px;line-height:1.65;background:var(--night);border-radius:12px;padding:12px 14px;color:#E6E0D2;word-break:break-all}
+.inbox{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.inbox li{display:grid;grid-template-columns:36px minmax(0,1fr) auto;gap:10px;align-items:center;background:var(--night);border-radius:12px;padding:8px 10px}
+.inbox .tcard{width:36px;border-radius:5px}.inbox .tcard .lbl{display:none}
+.inbox b{display:block;font-size:14px}.inbox span{font-size:12px;color:var(--subtle)}
+.inbox button,.linkbtn{border:0;background:transparent;color:var(--gold-light);font-weight:700;font-size:13px;padding:6px 4px}
+.inbox li.used{opacity:.5}
+.askland{background:linear-gradient(180deg,rgba(217,180,100,.14),var(--surface) 60%)}
+.askres{display:grid;grid-template-columns:96px minmax(0,1fr);gap:14px;align-items:center}
+.askres .tcard{width:96px}
+.askres b{font-size:18px;display:block}.askres p{margin:4px 0 0;font-size:13.5px;color:var(--muted)}
+.askpair{background:var(--surface-2);border-radius:12px;padding:12px 14px;display:grid;gap:4px}
+.askpair b{font-size:14px}.askpair span{font-size:13px;color:var(--muted);line-height:1.6}
+.askpair .pts{font-size:22px;font-weight:800;color:var(--gold-light)}
+.link-box{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}
+.link-box code{font-size:13px;background:var(--night);border:1px solid #3A3528;border-radius:10px;padding:11px 12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;user-select:all;color:var(--gold-light)}
+.link-box .btn{width:auto}
+.phone{border:1px solid var(--line-strong);border-radius:22px;padding:16px;background:linear-gradient(180deg,#14121C,var(--night));display:grid;gap:12px}
+.phone .from{font-size:12px;color:var(--muted)}
+.friend-res{display:grid;grid-template-columns:84px minmax(0,1fr);gap:12px;align-items:center}
+.friend-res h4{margin:0;font-size:15px}
+.friend-res p{margin:2px 0 0;font-size:13px;color:var(--muted)}
+.friend-res .pts{font-family:var(--f-display);font-size:28px;color:var(--gold-light)}
+
+.promo{position:relative;display:grid;gap:12px;padding:20px 18px;border-radius:var(--r);border:1.5px solid var(--gold);background:#201A0F;overflow:hidden}
+.promo-tag{justify-self:start;font-size:12px;font-weight:800;letter-spacing:.04em;color:#1A140A;background:var(--gold);padding:3px 10px;border-radius:99px}
+.promo-h{font-size:21px;line-height:1.4}
+.promo-h em{font-style:normal;color:var(--gold-light);font-size:26px}
+.promo-sub{margin:0;font-size:13.5px;color:#D8D1C2}
+.dots{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.dots span{aspect-ratio:1;border-radius:50%;border:1.5px dashed rgba(217,180,100,.55);display:grid;place-items:center;font-size:13px;font-weight:800;color:var(--muted);background:rgba(11,11,13,.4)}
+.dots span.on{border:1.5px solid var(--gold);background:var(--gold);color:#1A140A}
+.promo-count{margin:0;font-size:14px;font-weight:700;color:var(--gold-light);text-align:center}
+.promo.done{border-color:var(--gold-light)}
+.foot{margin-top:28px;font-size:12px;color:var(--subtle);text-align:center;line-height:1.7}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;background:var(--ivory);color:var(--night);font-weight:700;font-size:13.5px;padding:10px 16px;border-radius:99px;transition:opacity 200ms var(--ease-out),transform 200ms var(--ease-out);pointer-events:none;z-index:50;max-width:calc(100% - 32px)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+@media (max-width:380px){.member{grid-template-columns:minmax(0,1fr) minmax(0,1.2fr)}.member .rm{grid-column:1/-1;justify-self:end;padding:0 4px}}
+
+/* ---- no outlines for state: selection shows through type weight, colour and brightness ---- */
+.tabs{border-bottom:0;backdrop-filter:none;background:var(--night)}
+.tab{border-radius:0;font-weight:500;color:var(--subtle);background:transparent}
+.tab[aria-current="page"]{background:transparent;box-shadow:none;color:var(--ivory);font-weight:800}
+.master-switch{border:0;background:var(--surface-2)}
+.mtile .art{border:0}
+.mtile[aria-pressed="true"] .art{border:0;transform:none}
+.mtile[aria-pressed="false"]{opacity:.38;filter:saturate(.4)}
+.mpick{gap:4px}
+.mpick button{border:0;background:transparent;color:var(--subtle);font-weight:500}
+.mpick button img{opacity:.4;filter:grayscale(1);transition:opacity 200ms var(--ease-out),filter 200ms var(--ease-out)}
+.mpick button[aria-pressed="true"]{border:0;background:transparent;color:var(--ivory);font-weight:800}
+.mpick button[aria-pressed="true"] img{opacity:1;filter:none}
+.minfo{border:0}
+.minfo-head img{border:0}
+.minfo .quote{border-left:0;background:rgba(11,11,13,.5)}
+.seg{border:0}
+.tag{border:0;padding:0;color:var(--gold-light)}
+.topics button{border:0;background:var(--surface-2);color:var(--muted)}
+.topics button[aria-pressed="true"]{background:var(--gold);color:#1A140A;font-weight:700}
+.price,.score{border:0;background:var(--surface-2)}
+.btn-ghost{border:0;background:var(--surface-2);color:var(--gold-light)}
+.empty{border:0;background:var(--surface-2)}
+details.tp,.summary{border-top:0}
+.phone{border:0;background:var(--surface-2)}
+.promo{border:0}
+.dots span{border:0;background:var(--surface-2)}
+.dots span.on{background:var(--gold)}
+.bubble,.bubble.v-noel,.bubble.v-haku,.bubble.v-rion{border:0}
+.ring-card.chosen .tcard{box-shadow:0 8px 20px rgba(0,0,0,.45)}
+.slot .tcard,.extra .tcard{transition:opacity 280ms var(--ease-out),transform 280ms var(--ease-out)}
+.slot.focus .tcard,.extra.focus .tcard{box-shadow:none}
+.board.reading .slot.in .tcard{opacity:.4}
+.board.reading .slot.in.focus .tcard{opacity:1;transform:translateY(-8px)}
+.extras.reading .extra .tcard{opacity:.4}
+.extras.reading .extra.focus .tcard{opacity:1;transform:translateY(-8px)}
+.mswitch{display:grid;gap:8px;padding:14px 0 4px}
+.mswitch-h{margin:0;font-size:16px;font-weight:800}
+.mswitch .mpick button{padding:8px 6px;font-size:14px}
+.mswitch .mpick button img{width:34px;height:34px}
+.demo{background:var(--surface);border-radius:var(--r);padding:16px 18px}
+.demo summary{cursor:pointer;font-weight:700;font-size:14px;display:flex;justify-content:space-between;gap:8px;list-style:none}
+.demo summary::-webkit-details-marker{display:none}
+.demo summary span{color:var(--gold);font-size:13px}
+.demo[open] summary{margin-bottom:12px}
+#dailyCard{width:100%}
+</style>
+
+<main class="app">
+  <header class="topbar">
+    <img src="assets/logo.webp" alt="MYO TAROT" width="160" height="22">
+    <div class="ms-wrap"><span class="ms-label" id="msLabel">MY TAROT<br>MASTER</span><button class="master-switch" id="masterSwitch" type="button" aria-labelledby="msLabel switchName"><img id="switchFace" src="assets/face-noel.webp" alt=""><span id="switchName">노을</span></button></div>
+  </header>
+
+  <nav class="tabs" aria-label="메뉴">
+    <button class="tab" type="button" data-view="soul" aria-current="page">소울 카드</button>
+    <button class="tab" type="button" data-view="compat">소울 메이트</button>
+    <button class="tab" type="button" data-view="daily">오늘의 운세</button>
+    <button class="tab" type="button" data-view="deep">고민 상담</button>
+  </nav>
+
+  <!-- SOUL -->
+  <section class="view active" id="view-soul" aria-labelledby="soulH">
+    <div class="direction">
+      <p class="eyebrow">Soul Card</p>
+      <h2 id="soulH">나의 소울카드는?</h2>
+      <p class="lead">소울카드는 생년월일로 정해지는 나만의 타로 카드예요. 생년월일 숫자를 더해 메이저 아르카나 22장 중 한 장과 이어 주고, 그 카드로 타고난 성향과 강점, 조심할 점을 풀어 드려요.</p>
+    </div>
+
+    <div class="panel" id="soulForm">
+      <div class="row2">
+        <div class="field"><label for="visitorName">닉네임</label><input class="input" id="visitorName" maxlength="12" placeholder="닉네임" autocomplete="nickname"></div>
+        <div class="field"><label for="birthDate">생년월일 8자리</label><input class="input date" id="birthDate" inputmode="numeric" maxlength="10" placeholder="YYYY.MM.DD"></div>
+      </div>
+      <p class="err" id="soulError"></p>
+      <button class="btn btn-gold" id="calcButton" type="button">내 카드 보기</button>
+    </div>
+
+    <div class="ring" id="ring" aria-hidden="true"><div id="ringTrack"></div><p class="ring-cap" id="ringCap"></p></div>
+
+    <div class="panel" id="soulResult" hidden>
+      <div class="soul-hero">
+        <p class="eyebrow" id="soulNum"></p>
+        <div class="tcard" id="soulCard"></div>
+        <h3 id="soulTitle"></h3>
+        <p class="lead" id="soulLine" style="margin:0"></p>
+        <div class="tags" id="soulTags"></div>
+      </div>
+      <div class="mswitch">
+        <p class="mswitch-h">마스터별 해석</p>
+        <p class="hint" style="margin:0">같은 소울카드를 세 마스터가 각자의 스타일로 풀어드려요.</p>
+        <div class="mpick" role="group" aria-label="소울카드를 해석할 마스터">
+          <button type="button" data-pick="noel" aria-pressed="true"><img src="assets/face-noel.webp" alt="">노을</button>
+          <button type="button" data-pick="haku" aria-pressed="false"><img src="assets/face-haku.webp" alt="">하쿠</button>
+          <button type="button" data-pick="rion" aria-pressed="false"><img src="assets/face-rion.webp" alt="">리온</button>
+        </div>
+      </div>
+      <div class="mvoice">
+        <img id="soulSprite" src="assets/noel-cheek.webp" alt="">
+        <div class="bubble" id="soulBubble"><span class="who" id="soulWho"></span><p id="soulVoice"></p></div>
+      </div>
+      <dl class="dl">
+        <div><dt>이 카드의 결</dt><dd id="soulDesc"></dd></div>
+        <div><dt>강점</dt><dd id="soulStrength"></dd></div>
+        <div><dt>살펴보면 좋은 점</dt><dd id="soulCaution"></dd></div>
+        <div><dt>잘 어울리는 카드 유형</dt><dd id="soulGood"></dd></div>
+        <div><dt>조율이 필요한 카드 유형</dt><dd id="soulTough"></dd></div>
+      </dl>
+      <div class="btn-row">
+        <button class="btn btn-ghost" type="button" id="copySoul">결과 복사</button>
+        <button class="btn btn-quiet" type="button" id="soulAgain">다른 생년월일로 보기</button>
+        <button class="btn btn-quiet" type="button" data-go="compat">소울 메이트 보러 가기</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMPAT -->
+  <section class="view" id="view-compat" aria-labelledby="compatH">
+    <div>
+      <p class="eyebrow">Soul Mate</p>
+      <h2 id="compatH">우리는 어떤 소울메이트일까?</h2>
+      <p class="lead">친구에게 링크를 보내면 친구가 직접 생일을 입력해요. 두 사람의 소울카드를 맞대어 잘 맞는 점과 부딪히기 쉬운 점을 살펴봐요.</p>
+    </div>
+    <section class="panel askland" id="askLand" hidden aria-labelledby="askLandH">
+      <p class="eyebrow" style="margin:0">Soul Mate Request</p>
+      <h3 id="askLandH" style="font-size:20px;margin:0"></h3>
+      <p class="lead" id="askLandLead" style="margin:0"></p>
+      <div id="askLandForm" style="display:grid;gap:10px">
+        <div class="field"><label for="askName">내 이름</label><input class="input" id="askName" maxlength="8" placeholder="이름" autocomplete="nickname"></div>
+        <div class="field"><label for="askBirth">내 생년월일</label><input class="input date" id="askBirth" inputmode="numeric" maxlength="10" placeholder="YYYY.MM.DD"></div>
+        <p class="err" id="askErr"></p>
+        <button class="btn btn-gold" type="button" id="askSubmit">생일 보내고 결과 보기</button>
+        <p class="hint">생년월일은 상대에게 보이지 않아요. 소울카드만 전달돼요.</p>
+      </div>
+      <div id="askLandResult" hidden style="display:grid;gap:12px"></div>
+      <button class="btn btn-quiet" type="button" id="askClose">미리보기 닫기</button>
+    </section>
+    <div class="panel" id="mateMe">
+      <div class="member me">
+        <div class="field"><label for="mateName">내 닉네임</label><input class="input" id="mateName" maxlength="8" placeholder="닉네임" autocomplete="nickname"></div>
+        <div class="field"><label for="mateBirth">내 생년월일</label><input class="input date" id="mateBirth" inputmode="numeric" maxlength="10" placeholder="YYYY.MM.DD"></div>
+      </div>
+      <div style="display:grid;gap:8px">
+        <b style="font-size:15px">친구에게 보낼 메시지</b>
+        <p class="askmsg" id="askMsg"></p>
+      </div>
+      <p class="hint" style="margin:0">내 정보를 입력해야 친구에게 보낼 수 있어요. 친구가 생일을 넣는 순간 둘의 궁합이 계산돼요.</p>
+      <p class="err" id="mateErr"></p>
+      <div class="btn-row"><button class="btn btn-gold" type="button" id="askShare">친구에게 생일 물어보기</button><button class="btn btn-ghost" type="button" id="askPreview">친구 화면 미리보기</button></div>
+      <p class="hint">친구가 생일을 입력하고 결과 링크를 돌려보내 주면, 그 링크를 열 때 친구가 아래 랭킹에 들어와요. 친구의 생년월일은 나에게 보이지 않고 소울카드만 와요. 랭킹에서 이름을 누르면 둘의 궁합을 볼 수 있어요.</p>
+    </div>
+    <div class="panel" id="pairResult" hidden>
+      <div class="pair-title"><h3>다른 색의 한 페이지</h3><small id="pairNames"></small></div>
+      <div class="pair-cards"><div class="tcard" id="pairA"></div><div class="join" aria-hidden="true">✦</div><div class="tcard" id="pairB"></div></div>
+      <dl class="dl">
+        <div><dt>자연스럽게 어울리는 점</dt><dd id="pairPlus"></dd></div>
+        <div><dt>서로 다른 점</dt><dd id="pairCare"></dd></div>
+        <div><dt>조율해 볼 방향</dt><dd id="pairAdvice"></dd></div>
+      </dl>
+      <div class="score"><div><b id="pairNick"></b><small>상징 조화 점수 · 놀이용 지표</small></div><div class="pts" id="pairScore"></div></div>
+    </div>
+    <div class="panel">
+      <div class="vault-head"><h3 id="vaultTitle">소울메이트 랭킹</h3><span class="hint" id="rankNote">상위 21명까지 보여요</span></div>
+      <ol class="vault-list" id="vaultList"></ol>
+    </div>
+  <!-- NETWORK -->
+  <div id="netWrap" style="display:grid;gap:18px;margin-top:28px">
+    <div>
+      <p class="eyebrow">Your soul network</p>
+      <h2 id="netH">소울 네트워크</h2>
+      <p class="lead">생일을 보내 준 친구들이 내 소울카드를 중심으로 이어져요. 궁합 점수가 높은 상위 21명까지 보여요.</p>
+    </div>
+    <div class="panel">
+      <svg class="netmap" id="netMap" viewBox="0 0 360 360" role="img" aria-label="나와 친구들의 소울 네트워크"></svg>
+      <p class="hint" style="text-align:center">가까운 원일수록, 선이 굵고 밝을수록 궁합 점수가 높아요.</p>
+    </div>
+  </div>
+  </section>
+
+  <!-- DAILY -->
+  <section class="view" id="view-daily" aria-labelledby="dailyH">
+    <div>
+      <p class="eyebrow">Daily Tarot</p>
+      <h2 id="dailyH">오늘의 운세</h2>
+      <p class="lead">생년월일과 오늘 날짜로 뽑은 카드 한 장으로 오늘 하루의 흐름을 봐요. 오늘 안에는 몇 번을 봐도 같은 카드가 나와요.</p>
+    </div>
+    <div class="panel">
+      <div class="field"><label for="dailyBirth">생년월일</label><input class="input date" id="dailyBirth" inputmode="numeric" maxlength="10" placeholder="YYYY.MM.DD"></div>
+      <p class="err" id="dailyError"></p>
+      <button class="btn btn-gold" type="button" id="dailyButton">오늘의 운세 보기</button>
+    </div>
+    <div class="panel" id="dailyResult" hidden>
+      <p class="eyebrow" id="dailyDate"></p>
+      <div class="tcard big" id="dailyCard"></div>
+      <div class="mvoice"><img id="dailySprite" src="assets/noel-offer.webp" alt=""><div class="bubble" id="dailyBubble"><span class="who" id="dailyWho"></span><p id="dailyVoice"></p></div></div>
+      <button class="btn btn-ghost" type="button" id="copyDaily">오늘의 운세 복사</button>
+    </div>
+  </section>
+
+  <!-- DEEP -->
+  <section class="view" id="view-deep" aria-labelledby="deepH">
+    <div>
+      <p class="eyebrow">Tarot Counsel</p>
+      <h2 id="deepH">고민 상담</h2>
+      <p class="lead">고민을 적고 결제하면, 선택한 마스터가 네 장의 카드를 하나의 이야기로 읽어드려요.</p>
+    </div>
+    <div class="direction">
+      <h3 id="masterH" style="font-size:19px">오늘은 어떤 마스터가 카드를 리딩해드릴까요?</h3>
+      <p class="lead">카드는 내담자님께서 직접 뽑으시는 것이기 때문에 마스터를 바꾼다고 카드가 바뀌는 것은 아닙니다. 하지만 어떤 마스터에 따라서 카드의 의미를 전하는 온도감과 스타일은 다르답니다.</p>
+      <span class="tap">카드를 눌러 마스터를 선택하세요.</span>
+    </div>
+    <div class="masters" id="masterTiles" role="group" aria-label="타로 마스터 선택">
+      <button class="mtile" type="button" data-master="noel" aria-pressed="true"><span class="art"><img src="assets/key-noel.webp" alt="노을의 키 아트" loading="eager"></span></button>
+      <button class="mtile" type="button" data-master="haku" aria-pressed="false"><span class="art"><img src="assets/key-haku.webp" alt="하쿠의 키 아트" loading="lazy"></span></button>
+      <button class="mtile" type="button" data-master="rion" aria-pressed="false"><span class="art"><img src="assets/key-rion.webp" alt="리온의 키 아트" loading="lazy"></span></button>
+    </div>
+    <section class="minfo" id="masterInfo" aria-live="polite"></section>
+    <div class="panel" id="deepForm">
+      <div class="topics" role="group" aria-label="고민 주제" id="topics">
+        <button type="button" aria-pressed="false">관계</button><button type="button" aria-pressed="false">커리어</button><button type="button" aria-pressed="false">선택</button><button type="button" aria-pressed="false">앞으로의 흐름</button>
+      </div>
+      <div class="field"><label for="deepQuestion">지금 가장 궁금한 고민</label><textarea class="input" id="deepQuestion" maxlength="300" placeholder="고민을 자유롭게 적어 주세요."></textarea><span class="hint" id="qCount"></span><span class="hint">건강·질병에 관한 고민은 타로로 보지 않아요. 몸과 건강에 관한 고민은 의료진과 상담해 주세요.</span></div>
+      <label class="pubswitch"><input type="checkbox" id="pubCheck" checked><span class="sw" aria-hidden="true"></span><span class="pubtxt"><b id="pubTitle">상담 게시판에 공개 · 켜짐</b><small id="pubSub">상담이 끝나면 닉네임 없이 익명으로 게시판에 올라가요. 공개를 원하지 않으면 스위치를 꺼 주세요.</small></span></label>
+      <div class="price">
+        <div><span class="amt" id="priceNow">990원</span><small id="priceLabel">고민 상담 1회 · 카드 4장 + 종합 해석</small></div>
+        <button class="btn btn-gold" type="button" id="payButton">테스트 결제</button>
+      </div>
+      <p class="hint">같은 질문 안에서 <b style="color:var(--gold-light)">다른 마스터로 다시 보기</b>와 <b style="color:var(--gold-light)">추가 질문</b>은 각 500원이에요. 완전히 새로운 질문은 990원부터 다시 시작해요.</p>
+      <p class="test-note">프로토타입이라 실제 결제는 일어나지 않아요. 버튼을 누르면 결제가 끝난 것으로 처리돼요.</p>
+      <p class="err" id="deepError"></p>
+    </div>
+    <div class="promo" id="promo">
+      <span class="promo-tag">공유 이벤트</span>
+      <h3 class="promo-h">친구 5명에게 공유하면<br><em>990원 고민 상담 1회 무료</em></h3>
+      <p class="promo-sub" id="promoSub">내 링크로 친구 5명이 소울 카드 궁합을 확인하면, 고민 상담 1회를 무료로 드려요.</p>
+      <div class="dots" id="promoDots" role="img"></div>
+      <p class="promo-count" id="netCount"></p>
+      <button class="btn btn-gold" type="button" id="promoShare">내 링크 공유하고 무료 상담 받기</button>
+    </div>
+    <div id="safetyBox" hidden></div>
+    <div class="panel stage" id="stage" hidden>
+      <div class="deck" id="deck" hidden><div class="tcard back"></div><div class="tcard back"></div><div class="tcard back"></div></div>
+      <div class="board" id="board" hidden>
+        <div class="slot p4" data-pos="4"><div class="tcard"></div></div>
+        <div class="slot p1" data-pos="1"><div class="tcard"></div></div>
+        <div class="slot p2" data-pos="2"><div class="tcard"></div></div>
+        <div class="slot p3" data-pos="3"><div class="tcard"></div></div>
+      </div>
+      <div class="extras" id="extras" hidden></div>
+      <div class="mvoice" id="stageVoice">
+        <img id="stageSprite" src="assets/noel-think.webp" alt="">
+        <div class="bubble" id="stageBubble" aria-live="polite"><span class="step" id="stageStep"></span><span class="who" id="stageWho"></span><p id="stageText"></p></div>
+      </div>
+      <div id="stageNotes" style="display:grid;gap:6px"></div>
+      <div class="fu panel" id="fuBox" hidden></div>
+      <div class="btn-row" id="stageActions"></div>
+    </div>
+    <section class="board-wrap" id="boardWrap" aria-labelledby="boardH">
+      <span class="eyebrow">Reading Board</span>
+      <h3 id="boardH" style="font-size:19px;margin:0">상담 게시판</h3>
+      <p class="lead">다른 내담자들의 고민과 마스터의 리딩을 볼 수 있어요. 공개를 선택한 상담만 익명으로 올라와요.</p>
+      <div class="topics" id="boardTabs" role="group" aria-label="게시판 보기"><button type="button" data-bt="all" aria-pressed="true">모두의 상담</button><button type="button" data-bt="mine" aria-pressed="false">내 상담</button></div>
+      <div class="topics bfilter" id="boardFilter" role="group" aria-label="마스터별 보기"><button type="button" data-bf="" aria-pressed="true">전체</button><button type="button" data-bf="noel" aria-pressed="false">노을</button><button type="button" data-bf="haku" aria-pressed="false">하쿠</button><button type="button" data-bf="rion" aria-pressed="false">리온</button></div>
+      <div class="posts" id="posts"></div>
+      <p class="test-note">프로토타입이라 게시판에 예시 상담이 함께 보여요.</p>
+    </section>
+  </section>
+
+
+
+
+  <p class="foot">MYO TAROT · 프로토타입 V10 · 모든 결과는 오락과 자기성찰을 위한 것이며, 미래를 예측하거나 사람을 평가하지 않아요.</p>
+</main>
+<div class="toast" id="toast" role="status"></div>
+<div class="proofpop" id="proofPop" role="status" aria-live="polite" hidden><button type="button" class="pp-body" id="ppBody"><img id="ppFace" src="" alt=""><span><b id="ppText"></b><small id="ppSub"></small></span></button><button type="button" class="pp-x" id="ppX" aria-label="알림 닫기">×</button></div>
+
+<script>
+const tarotData = {
+ 1:{name:"마법사",one:"가능성을 현실로 만드는 시작의 사람",tags:["#실행력","#재능부자","#시작의힘"],description:"마법사 아키타입은 가진 자원을 빠르게 연결해 결과를 만들어내는 사람입니다. 아이디어가 떠오르면 그냥 품고 있기보다 직접 시도해보는 힘이 있습니다.",strength:"말, 기획, 실행, 연결 능력이 강합니다. 새로운 일을 시작하거나 사람들의 관심을 끌어내는 데 재능이 있습니다.",caution:"너무 빨리 시작하고 너무 빨리 흥미를 잃을 수 있습니다. 가능성을 결과로 만들려면 마무리 루틴이 필요합니다.",matches:[21,3,7],gift:"시작의 용기",needs:"계획을 끝까지 완성할 시간",art:"✧",daily:"새로운 시작이 필요한 일 하나를 골라 아주 작은 행동으로 옮겨보세요.",ask:"오늘 시작할 수 있는 가장 작은 행동은 무엇인가요?"},
+ 2:{name:"여사제",one:"말하지 않아도 흐름을 읽는 직관의 사람",tags:["#직관","#비밀스러움","#깊은감각"],description:"여사제 아키타입은 겉으로 드러난 정보보다 보이지 않는 분위기와 흐름을 잘 읽습니다. 쉽게 나서지 않지만 속으로는 많은 것을 알고 있습니다.",strength:"관찰력, 직감, 비밀 유지, 감정의 미세한 변화 감지가 강점입니다.",caution:"속으로만 판단하다가 타이밍을 놓칠 수 있습니다. 필요한 순간에는 생각을 말로 꺼내야 합니다.",matches:[1,5,18],gift:"깊은 관찰",needs:"생각을 말로 전할 기회",art:"☽",daily:"급하게 결론을 내리지 말고 마음이 가리키는 방향을 조용히 살펴보세요.",ask:"나는 무엇을 이미 알고 있지만 말하지 않고 있나요?"},
+ 3:{name:"여황제",one:"사람과 가능성을 자라게 하는 풍요의 사람",tags:["#돌봄","#풍요","#매력"],description:"여황제 아키타입은 따뜻함, 감각, 창조성, 돌봄의 힘을 가진 사람입니다. 주변 사람이 편안하게 성장할 수 있는 분위기를 만듭니다.",strength:"사람을 품는 힘, 감각적 표현, 관계를 부드럽게 만드는 능력이 강합니다.",caution:"너무 많이 품다가 지칠 수 있습니다. 돌봄과 자기 보호의 균형이 필요합니다.",matches:[9,4,19],gift:"따뜻한 보살핌",needs:"자신을 돌볼 여유",art:"❀",daily:"누군가를 돌보는 마음만큼 자신의 몸과 마음에도 친절을 건네세요.",ask:"오늘 나에게 어떤 작은 풍요를 선물할 수 있을까요?"},
+ 4:{name:"황제",one:"흔들리는 판에 기준을 세우는 사람",tags:["#리더십","#책임감","#기준"],description:"황제 아키타입은 질서, 책임, 구조를 중요하게 여깁니다. 감정에 휘둘리기보다 현실적으로 시스템을 세우는 사람입니다.",strength:"책임감, 조직력, 기준 설정, 장기적 안정감이 강합니다.",caution:"너무 통제하려 하면 주변이 답답해질 수 있습니다. 유연함을 잃지 않는 것이 중요합니다.",matches:[3,11,14],gift:"안정적인 기준",needs:"예외를 받아들이는 유연함",art:"♜",daily:"오늘 해야 할 일의 우선순위를 하나로 좁혀 단단하게 마무리해보세요.",ask:"지키고 싶은 원칙과 내려놓아도 될 통제는 무엇인가요?"},
+ 5:{name:"교황",one:"가치와 원칙을 전하는 사람",tags:["#원칙","#신뢰","#멘토"],description:"교황 아키타입은 지식, 전통, 기준, 신뢰를 중시합니다. 누군가에게 길을 안내하거나 안정적인 기준을 제공하는 역할과 잘 맞습니다.",strength:"교육, 상담, 조언, 조직 안에서의 신뢰 형성이 강점입니다.",caution:"너무 정답을 찾으려다 변화에 늦을 수 있습니다. 원칙과 유연함을 함께 가져야 합니다.",matches:[2,11,17],gift:"가치를 나누는 지혜",needs:"다른 답을 인정하는 마음",art:"✤",daily:"익숙한 방법의 의미를 되새기되, 새로운 생각에도 작은 자리를 내어주세요.",ask:"내가 정말 중요하게 여기는 가치는 무엇인가요?"},
+ 6:{name:"연인",one:"관계와 선택 속에서 빛나는 사람",tags:["#선택","#관계","#끌림"],description:"연인 아키타입은 관계 안에서 자신을 발견하는 사람입니다. 사람과 사람 사이의 조율, 감정의 교류, 중요한 선택이 삶의 핵심 주제가 됩니다.",strength:"공감력, 매력, 관계 감각, 선택의 순간에 마음을 읽는 능력이 강합니다.",caution:"남의 마음을 너무 의식하면 선택이 늦어질 수 있습니다. 결국 내 기준이 필요합니다.",matches:[11,19,14],gift:"마음을 잇는 공감",needs:"나만의 선택 기준",art:"♡",daily:"타인의 기대보다 자신의 진짜 마음을 먼저 확인한 뒤 선택해보세요.",ask:"이 선택은 나의 마음에서 시작됐나요?"},
+ 7:{name:"전차",one:"방향을 정하면 밀고 나가는 사람",tags:["#추진력","#승부","#이동"],description:"전차 아키타입은 목표가 생기면 빠르게 움직입니다. 경쟁 상황이나 변화의 흐름 속에서 강한 집중력을 보입니다.",strength:"추진력, 승부 감각, 목표 달성, 위기 돌파 능력이 강합니다.",caution:"너무 앞만 보고 달리면 주변과 충돌할 수 있습니다. 속도 조절이 필요합니다.",matches:[1,8,21],gift:"분명한 추진력",needs:"상대의 속도도 살피는 여유",art:"➶",daily:"속도를 올리기 전에 지금 가는 방향이 맞는지 잠시 확인해보세요.",ask:"나는 오늘 어디를 향해 움직이고 있나요?"},
+ 8:{name:"힘",one:"부드럽지만 쉽게 꺾이지 않는 사람",tags:["#인내","#내면의힘","#따뜻한강함"],description:"힘 아키타입은 겉으로 세게 밀어붙이기보다 내면의 인내와 부드러운 통제로 상황을 이겨냅니다.",strength:"끈기, 감정 조절, 사람을 다루는 부드러운 힘이 강합니다.",caution:"참는 것이 습관이 되면 속으로 지칠 수 있습니다. 표현할 때는 표현해야 합니다.",matches:[7,14,19],gift:"부드러운 끈기",needs:"마음을 솔직히 표현할 공간",art:"♌",daily:"강해 보이려 애쓰지 않아도 괜찮습니다. 부드럽게 꾸준히 가는 것이 힘입니다.",ask:"오늘 내가 부드럽게 다룰 수 있는 어려움은 무엇인가요?"},
+ 9:{name:"은둔자",one:"혼자만의 깊이로 세상을 읽는 사람",tags:["#사색형","#혼자가편해","#통찰"],description:"은둔자 아키타입은 조용히 관찰하고 깊게 이해하는 사람입니다. 겉으로는 느려 보여도 속으로는 누구보다 깊이 생각합니다.",strength:"통찰력, 분석력, 자기 성찰, 깊이 있는 조언이 강점입니다.",caution:"혼자만의 세계가 깊어질수록 사람들과 거리가 생길 수 있습니다. 필요한 연결은 끊지 않는 것이 좋습니다.",matches:[3,17,5],gift:"깊은 통찰",needs:"생각을 나눌 따뜻한 연결",art:"✶",daily:"혼자 생각할 시간을 확보하되, 마음에 떠오른 깨달음 하나는 나눠보세요.",ask:"지금 내 마음을 밝혀주는 작은 등불은 무엇인가요?"},
+ 10:{name:"운명의 수레바퀴",one:"흐름을 타고 인생의 판을 바꾸는 사람",tags:["#타이밍","#변화","#운의흐름"],description:"운명의 수레바퀴 아키타입은 변화의 흐름 속에서 기회를 만납니다. 계획보다 타이밍과 상황 변화가 중요한 삶의 주제가 됩니다.",strength:"기회 포착, 변화 적응, 흐름을 읽는 감각이 강합니다.",caution:"흐름에만 맡기면 주도권을 잃을 수 있습니다. 기회가 왔을 때 잡는 행동력이 필요합니다.",matches:[1,7,21],gift:"변화에 적응하는 감각",needs:"주도적으로 정하는 방향",art:"◎",daily:"예상과 다른 일이 생긴다면 우연히 열린 선택지를 살펴보세요.",ask:"변화 속에서도 내가 선택할 수 있는 일은 무엇인가요?"},
+ 11:{name:"정의",one:"균형과 기준으로 답을 찾는 사람",tags:["#공정함","#판단","#균형"],description:"정의 아키타입은 감정보다 기준과 균형을 중요하게 봅니다. 무엇이 맞고 틀린지, 어떤 선택이 공정한지를 깊게 따집니다.",strength:"판단력, 객관성, 책임감, 계약과 규칙을 다루는 능력이 강합니다.",caution:"너무 옳고 그름으로만 보면 감정의 흐름을 놓칠 수 있습니다.",matches:[6,4,5],gift:"공정한 판단",needs:"감정의 맥락을 듣는 마음",art:"⚖",daily:"결정을 앞두고 있다면 사실과 느낌을 구분해 적어보세요.",ask:"내 판단에 빠진 상대의 입장은 없나요?"},
+ 12:{name:"매달린 사람",one:"멈춤 속에서 다른 답을 찾는 사람",tags:["#관점전환","#기다림","#희생"],description:"매달린 사람 아키타입은 남들이 빨리 갈 때 멈춰서 다른 시각을 발견합니다. 기다림과 관점 전환이 삶의 큰 주제입니다.",strength:"인내, 다른 관점, 깊은 이해, 상황을 뒤집어 보는 능력이 강합니다.",caution:"기다림이 길어지면 자기 희생이 될 수 있습니다. 멈춤과 포기의 차이를 구분해야 합니다.",matches:[14,9,17],gift:"새로운 시각",needs:"기다림을 끝낼 기준",art:"⟡",daily:"서두르던 문제를 반대 방향에서 바라보면 어떤 답이 보일까요?",ask:"멈추는 것과 미루는 것은 어떻게 다를까요?"},
+ 13:{name:"죽음",one:"끝을 지나 새롭게 태어나는 사람",tags:["#전환","#정리","#재탄생"],description:"죽음 아키타입은 낡은 것을 끝내고 새로운 단계로 넘어가는 힘을 가집니다. 변화와 단절을 통해 성장합니다.",strength:"정리력, 결단력, 변화 수용, 새 출발의 힘이 강합니다.",caution:"끝내는 힘이 강한 만큼 관계나 상황을 너무 빨리 잘라낼 수 있습니다.",matches:[14,21,19],gift:"새 출발의 결단",needs:"마무리의 감정을 살필 시간",art:"❈",daily:"새로운 것을 시작하기 위해 이제 놓아도 되는 습관 하나를 골라보세요.",ask:"어떤 끝이 다음 시작의 공간을 만들까요?"},
+ 14:{name:"절제",one:"서로 다른 것을 부드럽게 섞는 사람",tags:["#균형","#조율","#회복"],description:"절제 아키타입은 극단으로 치우치지 않고 서로 다른 것을 섞어 조화롭게 만듭니다. 치유와 조율의 에너지가 강합니다.",strength:"조율, 회복, 중재, 균형 감각이 강합니다.",caution:"너무 맞추기만 하면 자기 욕구가 흐려질 수 있습니다.",matches:[8,13,5],gift:"유연한 조율",needs:"자기 욕구의 분명한 표현",art:"≋",daily:"모든 것을 한꺼번에 해결하기보다 무리 없는 리듬을 찾아보세요.",ask:"내가 지키고 싶은 균형의 중심은 어디인가요?"},
+ 15:{name:"악마",one:"강한 욕망과 현실 감각을 가진 사람",tags:["#욕망","#몰입","#현실감각"],description:"악마 아키타입은 현실의 욕망, 돈, 끌림, 성취욕을 부정하지 않는 사람입니다. 강한 몰입과 흡인력을 가지고 있습니다.",strength:"집중력, 현실 감각, 매력, 성과에 대한 욕심이 강합니다.",caution:"집착, 과한 몰입, 소유욕으로 흐르면 스스로 묶일 수 있습니다.",matches:[11,14,19],gift:"강한 몰입",needs:"자유롭게 멈출 선택권",art:"♢",daily:"원하는 것이 뭔지 솔직하게 인정한 뒤, 그것을 건강하게 선택하고 있는지 살펴보세요.",ask:"이 욕구는 나를 자유롭게 하나요, 묶어두나요?"},
+ 16:{name:"타워",one:"거짓 구조를 무너뜨리고 진실을 보는 사람",tags:["#각성","#변화","#판흔들기"],description:"타워 아키타입은 낡고 불안정한 구조를 그대로 두지 않습니다. 갑작스러운 깨달음과 변화 속에서 진짜를 보게 됩니다.",strength:"문제 발견, 구조 개혁, 진실을 마주하는 힘이 강합니다.",caution:"너무 급하게 무너뜨리면 주변이 불안해질 수 있습니다. 변화 후의 설계가 필요합니다.",matches:[17,14,21],gift:"문제의 본질을 발견하는 힘",needs:"다음 구조를 설계할 차분함",art:"⚡",daily:"당연하게 여겨온 생각을 한 번만 의심해보세요. 고칠 수 있는 작은 틈이 보일지 모릅니다.",ask:"지금 다시 세워야 할 것은 무엇인가요?"},
+ 17:{name:"별",one:"멀리 있는 가능성을 믿고 회복하는 사람",tags:["#희망","#회복","#영감"],description:"별 아키타입은 절망 뒤에도 가능성을 믿습니다. 사람들에게 조용한 희망과 영감을 주는 힘이 있습니다.",strength:"회복, 영감, 장기적 희망, 순수한 방향성이 강합니다.",caution:"희망만 보고 현실의 조건을 놓치지 않아야 합니다.",matches:[9,5,16],gift:"회복의 희망",needs:"작은 현실적 실천",art:"✦",daily:"조금씩 나아지고 있다는 증거를 하나 찾아 적어보세요.",ask:"나를 다시 움직이게 하는 희망은 무엇인가요?"},
+ 18:{name:"달",one:"불안과 상상 사이에서 진실을 찾는 사람",tags:["#감수성","#상상력","#무의식"],description:"달 아키타입은 감정과 무의식의 세계가 깊습니다. 보이지 않는 흐름을 민감하게 느끼지만, 때로는 불안도 크게 느낍니다.",strength:"상상력, 감수성, 예술성, 감정의 깊이가 강합니다.",caution:"불확실한 정보를 사실처럼 믿으면 흔들릴 수 있습니다. 사실을 확인하고 마음을 안정시키는 시간이 필요합니다.",matches:[19,2,14],gift:"섬세한 감수성",needs:"사실을 확인하는 명료함",art:"☾",daily:"막연한 불안이 있다면 상상한 일과 실제 확인한 일을 나누어보세요.",ask:"내가 두려워하는 것은 사실인가요, 예상인가요?"},
+ 19:{name:"태양",one:"밝게 드러나고 사람을 살리는 사람",tags:["#긍정","#인정","#밝은에너지"],description:"태양 아키타입은 존재 자체로 분위기를 밝게 만듭니다. 숨기기보다 드러날 때 더 강해지는 사람입니다.",strength:"긍정성, 표현력, 인정받는 힘, 사람을 안심시키는 에너지가 강합니다.",caution:"밝은 모습만 보여주려다 지친 마음을 숨길 수 있습니다.",matches:[18,3,8],gift:"따뜻한 표현력",needs:"약한 모습도 보일 편안함",art:"☼",daily:"오늘은 작은 성취도 충분히 기뻐해보세요. 밝지 않은 기분도 있는 그대로 괜찮습니다.",ask:"나의 기쁨을 누구와 나누고 싶나요?"},
+ 20:{name:"심판",one:"과거를 깨우고 다시 일어나는 사람",tags:["#재도약","#부름","#각성"],description:"심판 아키타입은 한 번 끝났다고 생각한 것에서 다시 의미를 발견합니다. 삶의 전환점에서 강하게 깨어나는 사람입니다.",strength:"회복력, 재도전, 과거 경험을 의미로 바꾸는 힘이 강합니다.",caution:"과거의 후회나 미련에 오래 묶이지 않아야 합니다.",matches:[21,17,11],gift:"다시 일어나는 힘",needs:"지난 일을 놓아주는 마음",art:"✺",daily:"잊고 있던 목표나 좋아하던 일을 다시 바라볼 시간을 만들어보세요.",ask:"예전의 경험이 오늘 나에게 알려주는 것은 무엇인가요?"},
+ 21:{name:"세계",one:"한 사이클을 완성하고 다음 단계로 가는 사람",tags:["#완성","#통합","#성취"],description:"세계 아키타입은 흩어진 경험을 하나로 통합해 완성하는 사람입니다. 끝까지 가서 결과를 만드는 힘이 있습니다.",strength:"완성도, 통합력, 성취, 넓은 시야가 강합니다.",caution:"완벽한 마무리를 원하다 시작이 늦어질 수 있습니다.",matches:[1,7,20],gift:"큰 그림의 완성",needs:"미완성도 받아들이는 용기",art:"◎",daily:"끝내지 못한 일 하나를 정리하고 그동안 해낸 일도 돌아보세요.",ask:"나는 어떤 과정을 지나 여기까지 왔나요?"},
+ 22:{name:"광대",one:"정해진 길 밖에서 새롭게 시작하는 사람",tags:["#자유","#모험","#새출발"],description:"광대 아키타입은 정해진 틀보다 가능성을 따라 움직입니다. 순수한 호기심과 자유로운 시작의 힘이 있습니다.",strength:"창의성, 자유로움, 적응력, 새로운 길을 여는 힘이 강합니다.",caution:"준비 없이 뛰어들면 현실적인 문제를 놓칠 수 있습니다.",matches:[1,21,8],gift:"가벼운 모험심",needs:"첫 걸음의 안전한 준비",art:"✧",daily:"늘 하던 길 대신 작은 변화를 시도해보세요. 다만 중요한 준비는 챙기세요.",ask:"지금 내게 필요한 새로운 경험은 무엇인가요?"}
+};
+const teamRoleCategories={
+  action:{label:"추진",strength:"새로운 일을 시작하고 움직이는 힘",watch:"속도와 우선순위를 맞추는 합의"},
+  insight:{label:"통찰",strength:"다른 관점과 질문으로 깊이를 더하는 힘",watch:"생각을 행동으로 옮길 시간"},
+  bridge:{label:"연결",strength:"사람의 마음과 관계를 잇는 힘",watch:"배려 속에서도 결론을 내리는 기준"},
+  structure:{label:"정리",strength:"기준을 세우고 완성도를 높이는 힘",watch:"시도와 변화에 열린 여유"}
+};
+const teamRoles={
+  1:["아이디어 실행가","action","새로운 가능성을 빠르게 제안하는 역할"],
+  2:["숨은 흐름 관찰자","insight","말로 드러나지 않은 단서를 살피는 역할"],
+  3:["성장 지원자","bridge","사람들이 편안하게 힘을 내도록 돕는 역할"],
+  4:["원칙 설계자","structure","목표와 책임의 기준을 세우는 역할"],
+  5:["경험 전수자","structure","배운 것을 정리해 함께 나누는 역할"],
+  6:["관계 연결자","bridge","서로 다른 의견을 연결하는 역할"],
+  7:["목표 추진자","action","정한 방향으로 팀을 이끄는 역할"],
+  8:["꾸준한 동행자","bridge","갈등을 부드럽게 다루며 지속하는 역할"],
+  9:["깊이 있는 분석가","insight","핵심을 천천히 탐구하고 짚는 역할"],
+  10:["기회 탐색가","action","변화의 흐름에서 새로운 선택지를 찾는 역할"],
+  11:["공정한 판단자","structure","합리적인 결정 기준을 점검하는 역할"],
+  12:["관점 전환가","insight","익숙한 문제를 다른 방향에서 보는 역할"],
+  13:["변화 정리자","action","다음 단계로 넘어갈 때 결단을 보태는 역할"],
+  14:["균형 조율자","bridge","팀의 다른 속도를 조화롭게 맞추는 역할"],
+  15:["몰입 실행가","action","집중이 필요한 과제에 에너지를 쏟는 역할"],
+  16:["구조 개선가","action","고정관념을 질문하고 방식을 바꾸는 역할"],
+  17:["가능성 발견자","insight","멀리 내다보는 비전과 희망을 보태는 역할"],
+  18:["감정 감지자","bridge","드러나지 않은 불편함과 분위기를 감지하는 역할"],
+  19:["분위기 촉진자","bridge","긍정적인 표현으로 참여를 돕는 역할"],
+  20:["재도전 촉진자","action","경험을 발판 삼아 다시 움직이는 역할"],
+  21:["완성 설계자","structure","여러 작업을 묶어 결과로 완성하는 역할"],
+  22:["새길 탐험가","action","틀 밖의 아이디어와 첫 시도를 여는 역할"]
+};
+const rolePairs={
+  "action|structure":["아이디어를 결과로","시도에 추진력이 붙고 기준까지 더해지면 새로운 일이 실제 결과물로 이어질 수 있어요."],
+  "action|insight":["속도와 통찰의 조화","빠른 실험과 깊은 검토가 함께 작동하면 시행착오를 배움으로 바꾸기 좋아요."],
+  "action|bridge":["움직임과 공감의 조화","행동하는 힘과 사람을 챙기는 시선이 만나면 팀이 함께 움직이기 쉬워져요."],
+  "bridge|structure":["배려와 기준의 조화","사람의 필요를 살피면서도 역할과 약속을 분명하게 세울 수 있어요."],
+  "bridge|insight":["감정과 통찰의 연결","겉으로 드러난 말뿐 아니라 숨은 이유까지 살펴보는 대화를 만들 수 있어요."],
+  "insight|structure":["생각을 체계로","좋은 질문과 실천 가능한 기준이 연결되면 계획의 빈틈을 줄일 수 있어요."]
+};
+function pairLabel(a,b){
+  if(a.number===b.number)return "닮은 결";
+  const aCard=tarotData[a.number],bCard=tarotData[b.number];
+  if(aCard.matches.includes(b.number)&&bCard.matches.includes(a.number))return "서로 북돋는 결";
+  if(aCard.matches.includes(b.number)||bCard.matches.includes(a.number))return "이어지는 결";
+  if(teamRoles[a.number][1]===teamRoles[b.number][1])return "공통의 강점";
+  return "상호 보완";
+}
+function rolePairStory(a,b){
+  const ac=teamRoles[a.number][1],bc=teamRoles[b.number][1];
+  if(ac===bc)return `두 사람 모두 ‘${teamRoleCategories[ac].label}’의 성향을 비추어 같은 장점을 크게 만들 수 있어요. 대신 빠지기 쉬운 다른 관점이 있는지 확인해 보세요.`;
+  const key=[ac,bc].sort().join("|");
+  return rolePairs[key]?.[1]||"서로 다른 방식이 만나 새로운 선택지를 만들 수 있어요.";
+}
+function getTeamPair(a,b){
+  const x=tarotData[a.number],y=tarotData[b.number];
+  const title=pairLabel(a,b);
+  const plus=`${a.name}의 ‘${x.gift}’과(와) ${b.name}의 ‘${y.gift}’이(가) 만나는 조합입니다. ${rolePairStory(a,b)}`;
+  const care=`${a.name}에게는 ‘${x.needs}’, ${b.name}에게는 ‘${y.needs}’이(가) 중요할 수 있어요. 서로의 속도와 일하는 방식을 미리 말로 확인해 보세요.`;
+  const advice=a.number===b.number?"같은 방식으로 시작하더라도 역할을 따로 정하고, 빠진 관점이 없는지 서로 점검해 보세요.":"함께 시작할 과제 하나를 정하고 아이디어를 내는 사람, 검토하는 사람, 마무리하는 사람의 역할을 나눠 보세요.";
+  return {a,b,title,plus,care,advice,reciprocal:x.matches.includes(b.number)&&y.matches.includes(a.number)};
+}
+
+</script>
+<script>
+const $=id=>document.getElementById(id);
+const roman=["","I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII","XIII","XIV","XV","XVI","XVII","XVIII","XIX","XX","XXI","0"];
+const A=n=>`assets/${n}.webp`;
+
+/* ---------- storage (never required) ---------- */
+const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch{return false}}};
+
+/* ---------- Korean particles ---------- */
+function batchim(w){const c=String(w).trim().slice(-1).charCodeAt(0)-0xAC00;return c>=0&&c<=11171&&c%28!==0}
+const j=(w,a,b)=>w+(batchim(w)?a:b);
+const qj=(w,a,b)=>`‘${w}’`+(batchim(w)?a:b);
+const first=s=>String(s).split(/(?<=[.!?])\s+/)[0];
+
+/* ---------- masters ---------- */
+const MASTERS={
+  noel:{intro:"노을은 사실과 선택의 근거를 차근차근 따져 현실적인 방향을 짚어 주는 냉철한 분석가예요. 결정은 해야 하는데 머리가 복잡할 때, 흩어진 생각을 정리하고 싶다면 노을에게 맡겨 보세요.",ko:"노을",en:"NOEL",title:"자유롭고 냉철한 분석가",how:"사실과 선택의 근거를 따져, 현실적인 방향을 짚어요",tone:"짧고 단정한 존댓말",good:"결정은 해야 하는데 머리가 복잡할 때",quote:"결론부터 보겠습니다. 감정은 잠시 내려놓으십시오.",
+    sp:{hello:"noel-cheek",think:"noel-think",offer:"noel-offer",read:"noel-ponder",advice:"noel-calm",firm:"noel-arms",care:"noel-calm"}},
+  haku:{intro:"하쿠는 카드 속에서 가능성과 움직일 용기를 먼저 찾아 주는 밝고 명랑한 응원가예요. 망설여져서 누가 등을 떠밀어 줬으면 할 때, 하쿠와 함께라면 첫걸음이 한결 가벼워질 거예요.",ko:"하쿠",en:"HAKU",title:"밝고 명랑한 응원가",how:"카드에서 가능성과 움직일 용기를 먼저 찾아요",tone:"친구 같은 반말, 에너지 가득",good:"망설여져서 누가 등을 떠밀어 줬으면 할 때",quote:"오케이, 같이 보자! 나 벌써 두근두근해!",
+    sp:{hello:"haku-wave",think:"haku-excited",offer:"haku-card",read:"haku-welcome",advice:"haku-thumbs",firm:"haku-peace",care:"haku-welcome"}},
+  rion:{intro:"리온은 감정과 관계의 미묘한 흐름을 조심스럽게 읽어 내는 섬세한 관찰자예요. 마음이 지쳐 위로가 먼저 필요할 때, 리온이 서두르지 않고 이야기를 끝까지 들어 줄 거예요.",ko:"리온",en:"RION",title:"섬세하고 차분한 관찰자",how:"감정과 관계의 미묘한 흐름을 조심스럽게 읽어요",tone:"부드럽고 차분한 존댓말",good:"마음이 지쳐서 위로가 먼저 필요할 때",quote:"서두르지 않을게요. 마음의 결부터 천천히 볼게요.",
+    sp:{hello:"rion-calm",think:"rion-card",offer:"rion-offer",read:"rion-surprise",advice:"rion-worry",firm:"rion-calm",care:"rion-comfort"}}
+};
+let master="noel";
+const M=()=>MASTERS[master];
+
+/* soul-card voice per master */
+const soulVoice={
+  noel:(c,nm)=>`${nm?nm+"님. ":""}${c.name}입니다. 핵심은 ‘${c.gift}’. 이미 가진 자원입니다. 약점은 ${qj(c.needs,"이","가")} 부족할 때 드러납니다. 기억해 두십시오.`,
+  haku:(c,nm)=>`${nm?j(nm,"아","야")+"! ":""}${j(c.name,"이야","야")}! 대박, 너한테 딱이다! 네 안의 ‘${c.gift}’, 오늘 딱 하나만 꺼내서 써 보자. 생각보다 훨씬 잘할걸?`,
+  rion:(c,nm)=>`${nm?nm+"님, ":""}${c.name} 카드가 나왔어요. ‘${c.gift}’… 참 단단한 힘이에요. 그런데 그 뒤에 ${qj(c.needs,"을","를")} 바라는 마음도 있을지 몰라요. 그 마음도 천천히 돌봐 주세요.`
+};
+/* card advice is written in 해요체; each master says it in their own register */
+const VOICE_RULES={
+  noel:[[/해보세요/g,"해 보십시오"],[/보세요/g,"보십시오"],[/건네세요/g,"건네십시오"],[/주세요/g,"주십시오"],[/챙기세요/g,"챙기십시오"]],
+  haku:[[/해보세요/g,"해 봐"],[/보세요/g,"봐"],[/건네세요/g,"건네"],[/주세요/g,"줘"],[/챙기세요/g,"챙겨"],[/괜찮습니다/g,"괜찮아"],[/힘입니다/g,"힘이야"],[/모릅니다/g,"몰라"],[/보일까요\?/g,"보일까?"],[/살펴보세요/g,"살펴봐"]],
+  rion:[[/괜찮습니다/g,"괜찮아요"],[/힘입니다/g,"힘이에요"],[/모릅니다/g,"몰라요"]]
+};
+const V=(t,mk)=>VOICE_RULES[mk].reduce((a,[r,x])=>a.replace(r,x),t);
+const dailyVoice={
+  noel:c=>`${c.name}입니다. ${V(c.daily,"noel")} 오늘 답할 질문은 하나입니다. “${c.ask}”`,
+  haku:c=>`오늘은 ${j(c.name,"이야","야")}! ${V(c.daily,"haku")} 오늘의 질문! “${c.ask}”`,
+  rion:c=>`오늘은 ${c.name} 카드가 곁에 왔어요. ${V(c.daily,"rion")} 잠깐 멈추는 순간에 이 질문을 떠올려 봐요. “${c.ask}”`
+};
+function setVoice(img,bub,mk,sp){img.src=A(MASTERS[mk].sp[sp]);img.alt=MASTERS[mk].ko;img.dataset.m=mk;bub.className="bubble v-"+mk}
+
+/* ---------- view switching ---------- */
+function showView(v){
+  document.querySelectorAll(".tab").forEach(t=>{if(t.dataset.view===v)t.setAttribute("aria-current","page");else t.removeAttribute("aria-current")});
+  document.querySelectorAll(".view").forEach(s=>s.classList.toggle("active",s.id==="view-"+v));
+  if(v==="compat"){if(!$("mateBirth").value&&validDate($("birthDate").value))$("mateBirth").value=$("birthDate").value;if(!$("mateName").value)$("mateName").value=$("visitorName").value.trim();renderAsk();renderNet()}
+  if(v==="deep"){const box=$("masterTiles"),t=box.querySelector('.mtile[aria-pressed="true"]');if(t)box.scrollLeft=t.offsetLeft-(box.clientWidth-t.clientWidth)/2}
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>showView(t.dataset.view)));
+document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.go)));
+
+function toast(m){const pp=$("proofPop");if(pp&&!pp.hidden){pp.classList.remove("show");pp.hidden=true}const t=$("toast");t.textContent=m;t.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove("show"),2600)}
+async function copyText(text){try{await navigator.clipboard.writeText(text);toast("복사했어요");return}catch{}const ta=document.createElement("textarea");ta.value=text;ta.style.cssText="position:fixed;top:0;opacity:0";document.body.append(ta);ta.select();let ok=false;try{ok=document.execCommand("copy")}catch{}ta.remove();toast(ok?"복사했어요":"이 브라우저에서는 자동 복사가 막혀 있어요")}
+
+/* ---------- master select ---------- */
+function selectMaster(k){
+  master=k;document.documentElement.dataset.master=k;
+  document.querySelectorAll(".mtile").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.master===k)));
+  {const box=$("masterTiles"),t=box.querySelector(`.mtile[data-master="${k}"]`);box.scrollTo({left:t.offsetLeft-(box.clientWidth-t.clientWidth)/2,behavior:"smooth"})}
+  document.querySelectorAll("[data-pick]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.pick===k)));
+  const m=M();
+  $("masterInfo").innerHTML=`<p class="mintro">${m.intro}</p>
+  <p class="quote">“${m.quote}”</p>`;
+  $("switchFace").src=A("face-"+k);$("switchName").textContent=M().ko;
+  if(state.soul)renderSoul();
+  if(state.daily)renderDaily();
+}
+document.querySelectorAll(".mtile").forEach(b=>b.addEventListener("click",()=>{selectMaster(b.dataset.master)}));
+document.querySelectorAll("[data-pick]").forEach(b=>b.addEventListener("click",()=>{selectMaster(b.dataset.pick)}));
+$("masterSwitch").addEventListener("click",()=>{const ks=Object.keys(MASTERS);selectMaster(ks[(ks.indexOf(master)+1)%3]);toast(`${M().ko}${batchim(M().ko)?"이":"가"} 카드를 읽어요`)});
+
+/* ---------- birth date ---------- */
+function digits(v){return String(v||"").replace(/\D/g,"").slice(0,8)}
+function today(){const d=new Date();return d.getFullYear()+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0")}
+function validDate(v){const s=digits(v);if(s.length!==8)return false;const y=+s.slice(0,4),m=+s.slice(4,6),d=+s.slice(6);const t=new Date(y,m-1,d);return y>1900&&t.getFullYear()===y&&t.getMonth()===m-1&&t.getDate()===d&&s<=today()}
+function soulOf(v){if(!validDate(v))return null;let n=digits(v).split("").reduce((a,b)=>a+ +b,0);while(n>22)n=String(n).split("").reduce((a,b)=>a+ +b,0);return n||22}
+document.querySelectorAll(".input.date").forEach(inp=>inp.addEventListener("input",()=>{const s=digits(inp.value);inp.value=s.length>6?`${s.slice(0,4)}.${s.slice(4,6)}.${s.slice(6)}`:s.length>4?`${s.slice(0,4)}.${s.slice(4)}`:s}));
+
+/* card faces: only The Fool and The Hierophant art exist yet, so every card uses one of them as a placeholder */
+const CARD_ART={22:"card-fool",5:"card-hierophant"};
+function cardArt(n){return CARD_ART[n]||(n%2?"card-hierophant":"card-fool")}
+function drawCard(el,n){const c=tarotData[n];el.className="tcard art";el.innerHTML=`<img src="${A(cardArt(n))}" alt="" loading="lazy"><span class="lbl"><b>${roman[n]}</b>${c.name}</span>`;el.setAttribute("role","img");el.setAttribute("aria-label",`${roman[n]} ${c.name} 카드`)}
+
+/* ---------- soul ---------- */
+const state={soul:null,daily:null,pair:null,team:null};
+/* 22 cards slide by slowly; on input the strip eases to a stop on the soul card */
+const RM=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const ring={cards:[],off:0,speed:0,last:0,anim:null,W:280,S:296};
+function ringSize(){ring.W=Math.round(Math.min(300,innerWidth*.74));ring.S=ring.W+18;if(!RM&&ring.speed)ring.speed=ring.S*22/60;$("ring").style.setProperty("--rw",ring.W+"px")}
+(function buildRing(){ringSize();ring.speed=RM?0:ring.S*22/60;for(let i=0;i<66;i++){const n=i%22+1,w=el("div","ring-card");w.dataset.n=n;const c=el("div");drawCard(c,n);c.classList.add("big");c.querySelector("img").loading="eager";w.append(c);$("ringTrack").append(w);ring.cards.push(w)}ring.off=22*ring.S;placeRing();requestAnimationFrame(tickRing)})();
+addEventListener("resize",()=>{ringSize();placeRing()});
+/* pause while the pointer rests on the strip (mouse hover, or a finger held down on touch) */
+$("ring").addEventListener("pointerenter",e=>{if(e.pointerType==="mouse")ring.hold=true});
+$("ring").addEventListener("pointerleave",()=>{ring.hold=false});
+$("ring").addEventListener("pointerdown",()=>{ring.hold=true});
+$("ring").addEventListener("pointerup",e=>{if(e.pointerType!=="mouse")ring.hold=false});
+$("ring").addEventListener("pointercancel",()=>{ring.hold=false});
+function placeRing(){const L=22*ring.S,C=$("ring").clientWidth/2||innerWidth/2;const off=L+(((ring.off-L)%L)+L)%L;
+  ring.cards.forEach((w,i)=>{const x=i*ring.S-off,d=Math.abs(x+ring.W/2-C),k=Math.min(1,d/ring.S);w.style.transform=`translate3d(${x.toFixed(1)}px,0,0) scale(${(1-.1*k).toFixed(3)})`;w.style.opacity=(1-.55*k).toFixed(3)})}
+function tickRing(t){const dt=ring.last?Math.min(.05,(t-ring.last)/1000):0;ring.last=t;
+  if(ring.anim){const p=Math.min(1,(t-ring.anim.t0)/ring.anim.dur),e=1-Math.pow(1-p,4);ring.off=ring.anim.from+(ring.anim.to-ring.anim.from)*e;if(p>=1){const done=ring.anim.done;ring.anim=null;done()}}
+  else if(!ring.hold)ring.off+=ring.speed*dt;
+  if(!$("ring").hidden&&$("view-soul").classList.contains("active"))placeRing();
+  requestAnimationFrame(tickRing)}
+function spinTo(n){return new Promise(res=>{const L=22*ring.S,C=$("ring").clientWidth/2;const base=(22+n-1)*ring.S+ring.W/2-C;let to=base;while(to<ring.off+L*1.2)to+=L;if(RM){ring.off=to;placeRing();res();return}ring.anim={from:ring.off,to,t0:performance.now(),dur:2600,done:res}})}
+function resetRing(){$("ring").hidden=false;$("ring").classList.remove("done");ring.cards.forEach(w=>w.classList.remove("chosen"));$("ringCap").textContent="";ring.speed=RM?0:ring.S*22/60}
+let spinning=false;
+async function calcSoul(){
+  if(spinning)return;
+  const n=soulOf($("birthDate").value);
+  if(!n){$("soulError").textContent="생년월일 8자리를 입력해 주세요. 예: 1995.08.15";$("birthDate").focus();return}
+  $("soulError").textContent="";spinning=true;$("calcButton").disabled=true;
+  resetRing();$("soulResult").hidden=true;$("ringCap").textContent="생년월일로 카드를 찾는 중…";
+  $("ring").scrollIntoView({behavior:"smooth",block:"center"});
+  await spinTo(n);
+  ring.speed=0;ring.cards.forEach(w=>w.classList.toggle("chosen",+w.dataset.n===n));$("ring").classList.add("done");$("ringCap").textContent=`당신의 소울카드 · ${roman[n]} ${tarotData[n].name}`;
+  await sleep(RM?0:900);
+  state.soul=n;renderSoul();$("ring").hidden=true;$("soulResult").hidden=false;$("soulResult").scrollIntoView({behavior:"smooth",block:"start"});
+  if(!$("dailyBirth").value)$("dailyBirth").value=$("birthDate").value;
+  spinning=false;$("calcButton").disabled=false;renderNet();
+}
+function renderSoul(){
+  const n=state.soul,c=tarotData[n],nm=$("visitorName").value.trim();
+  drawCard($("soulCard"),n);$("soulCard").classList.add("big");$("soulCard").querySelector("img").loading="eager";
+  $("soulNum").textContent=`${roman[n]} · Soul ${String(n).padStart(2,"0")}`;
+  $("soulTitle").textContent=c.name;$("soulLine").textContent=c.one;
+  $("soulTags").replaceChildren(...c.tags.map(t=>{const s=document.createElement("span");s.className="tag";s.textContent=t;return s}));
+  setVoice($("soulSprite"),$("soulBubble"),master,"hello");
+  $("soulWho").textContent=M().ko;$("soulVoice").textContent=soulVoice[master](c,nm);
+  $("soulDesc").textContent=c.description;$("soulStrength").textContent=c.strength;$("soulCaution").textContent=c.caution;
+  $("soulGood").textContent=c.matches.map(m=>tarotData[m].name).join(" · ")+" — 서로의 강점을 보완하기 쉬운 카드예요.";
+  const role=teamRoles[n][1];const far=Object.keys(tarotData).map(Number).filter(m=>m!==n&&!c.matches.includes(m)&&teamRoles[m][1]!==role).slice(0,3);
+  $("soulTough").textContent=far.map(m=>tarotData[m].name).join(" · ")+" — 일하는 속도와 기준이 달라 대화로 맞춰 가면 좋은 카드예요. 사람을 좋고 나쁘게 나누는 기준은 아니에요.";
+}
+$("calcButton").addEventListener("click",()=>calcSoul());
+$("soulAgain").addEventListener("click",()=>{$("soulResult").hidden=true;state.soul=null;$("birthDate").value="";resetRing();$("soulForm").scrollIntoView({behavior:"smooth",block:"start"});$("birthDate").focus()});
+$("birthDate").addEventListener("keydown",e=>{if(e.key==="Enter")calcSoul()});
+$("copySoul").addEventListener("click",()=>{if(!state.soul)return;const c=tarotData[state.soul];copyText(`MYO TAROT 소울 카드\n${roman[state.soul]} ${c.name} · ${c.one}\n${c.tags.join(" ")}\n\n${M().ko}: ${$("soulVoice").textContent}`)});
+
+/* ---------- compatibility scoring (wider, deterministic) ---------- */
+function pairHash(a,b){const lo=Math.min(a,b),hi=Math.max(a,b);return(((lo*2654435761)^(hi*40503))>>>0)%13-6}
+const labelBase={"닮은 결":80,"서로 북돋는 결":90,"이어지는 결":81,"공통의 강점":71,"상호 보완":67};
+function pairScore(a,b){const l=pairLabel({number:a},{number:b});return Math.max(58,Math.min(97,labelBase[l]+pairHash(a,b)))}
+function pairNickname(a,b){return({"닮은 결":"서로를 비추는 두 거울","서로 북돋는 결":"딱 맞물리는 두 열쇠","이어지는 결":"마음을 잇는 다리","공통의 강점":"같은 리듬의 동행","상호 보완":"서로 다른 빛의 조합"})[pairLabel({number:a},{number:b})]}
+function teamScore(people){let s=[];for(let i=0;i<people.length;i++)for(let k=i+1;k<people.length;k++)s.push(pairScore(people[i].number,people[k].number));const avg=s.reduce((x,y)=>x+y,0)/s.length;const roles=new Set(people.map(p=>teamRoles[p.number][1])).size;return Math.max(55,Math.min(96,Math.round(avg*.86+roles*3.2)))}
+function teamNickname(people){const r=new Set(people.map(p=>teamRoles[p.number][1])).size;return["","한 방향의 집중력","두 리듬이 만난 사이","세 갈래의 조화","네 가지 빛의 조합"][r]}
+
+/* ---------- pair ---------- */
+function pairPlusText(a,b,an,bn){const x=tarotData[a],y=tarotData[b],am=x.matches.includes(b),bm=y.matches.includes(a);return a===b?`두 사람 모두 ${x.name}의 상징을 지녀 비슷한 가치를 쉽게 알아볼 수 있는 조합이에요.`:am&&bm?`서로를 짝꿍 카드로 가리키는 조합이에요. ${x.name}의 ‘${x.gift}’${batchim(x.gift)?"과":"와"} ${y.name}의 ‘${y.gift}’${batchim(y.gift)?"이":"가"} 자연스럽게 이어져요.`:am||bm?`한쪽 카드가 다른 쪽을 특히 잘 어울리는 상징으로 보는 조합이에요. ${an}님의 ${qj(x.gift,"과","와")} ${bn}님의 ${qj(y.gift,"이","가")} 서로 다른 장점을 보여줘요.`:`서로 다른 색이 매력인 조합이에요. ${an}님의 ${qj(x.gift,"과","와")} ${bn}님의 ‘${y.gift}’에서 새로운 관점을 배울 수 있어요.`}
+function runPair(p1,p2){
+  const a=p1.number,b=p2.number,an=p1.name,bn=p2.name,x=tarotData[a],y=tarotData[b];
+  state.pair={a,b,an,bn};
+  drawCard($("pairA"),a);drawCard($("pairB"),b);
+  $("pairNames").textContent=`2명의 소울메이트 · ${an} · ${bn}`;
+  const am=x.matches.includes(b),bm=y.matches.includes(a);
+  $("pairPlus").textContent=pairPlusText(a,b,an,bn);
+  $("pairCare").textContent=`${an}님의 ${x.name}에게는 ‘${x.needs}’, ${bn}님의 ${y.name}에게는 ${qj(y.needs,"이","가")} 중요할 수 있어요. 같은 일을 다르게 받아들일 때 누가 옳은지보다 무엇이 필요한지 물어보세요.`;
+  $("pairAdvice").textContent=a===b?"닮은 점이 많을수록 차이를 놓치기 쉬워요. 각자의 바람을 따로 적어 보고 하나씩 비교해 보세요.":`같은 상황을 한 번은 ${x.name}의 관점으로, 한 번은 ${y.name}의 관점으로 이야기해 보세요. 그 대화가 점수보다 중요해요.`;
+  $("pairNick").textContent=pairNickname(a,b);
+  $("pairScore").innerHTML=`${pairScore(a,b)}<span>점</span>`;
+  $("pairResult").hidden=false;$("pairResult").scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+function el(tag,cls,txt){const e=document.createElement(tag);if(cls)e.className=cls;if(txt!==undefined)e.textContent=txt;return e}
+$("mateBirth").addEventListener("input",()=>{const b=$("mateBirth"),s=digits(b.value);b.value=s.length>6?`${s.slice(0,4)}.${s.slice(4,6)}.${s.slice(6)}`:s.length>4?`${s.slice(0,4)}.${s.slice(4)}`:s});
+["mateName","mateBirth"].forEach(id=>$(id).addEventListener("input",()=>{clearTimeout(renderAsk.t);renderAsk.t=setTimeout(()=>{renderAsk();renderNet()},250)}));
+
+/* ---------- daily ---------- */
+function seeded(seed){let h=2166136261;for(const ch of seed){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return(h>>>0)%22+1}
+function runDaily(){const b=$("dailyBirth").value;if(!soulOf(b)){$("dailyError").textContent="생년월일 8자리를 확인해 주세요.";return}$("dailyError").textContent="";state.daily=seeded(today()+":"+digits(b));renderDaily();$("dailyResult").hidden=false}
+function renderDaily(){const n=state.daily,c=tarotData[n],t=today();drawCard($("dailyCard"),n);$("dailyCard").classList.add("big");$("dailyDate").textContent=`${+t.slice(4,6)}월 ${+t.slice(6)}일의 카드 · ${roman[n]} ${c.name}`;setVoice($("dailySprite"),$("dailyBubble"),master,"offer");$("dailyWho").textContent=M().ko;$("dailyVoice").textContent=dailyVoice[master](c)}
+$("dailyButton").addEventListener("click",runDaily);
+$("copyDaily").addEventListener("click",()=>{if(!state.daily)return;const c=tarotData[state.daily];copyText(`MYO TAROT 오늘의 운세\n${c.name}\n${c.daily}\n${c.ask}`)});
+
+/* ---------- deep reading ---------- */
+const PRICE_BASE=990,PRICE_ADD=500;
+const won=n=>n.toLocaleString("ko-KR")+"원";
+let paid=false,reading=null;
+function renderPrice(){$("priceNow").textContent=won(PRICE_BASE);$("payButton").textContent=paid?"카드 뽑기":"테스트 결제"}
+renderPrice();
+document.querySelectorAll("#topics button").forEach(b=>b.addEventListener("click",()=>document.querySelectorAll("#topics button").forEach(x=>x.setAttribute("aria-pressed",String(x===b)))));
+const qc=()=>$("qCount").textContent=`${$("deepQuestion").value.length} / 300자`;$("deepQuestion").addEventListener("input",qc);qc();
+
+const CRISIS=/자살|죽고\s*싶|죽을\s*까|죽어\s*버|자해|극단적|목숨|사라지고\s*싶|살기\s*싫/;
+const PRO=/투자|주식|코인|대출|빚|소송|고소|법적/;
+const HEALTH=/건강|병원|진단|수술|질병|질환|증상|통증|치료|약을|복용|처방|임신|검진|입원|투병|아픈\s*(곳|데)|몸이\s*아|우울증|공황|암\s*(검사|수술|일까|인가|일지)/;
+function healthView(){
+  const s=$("safetyBox");s.hidden=false;s.className="safety soft";
+  const line={noel:"건강에 관한 판단은 카드의 영역이 아닙니다. 의료진과 상의하십시오. 다른 고민이라면 기꺼이 보겠습니다.",haku:"앗, 몸이랑 건강 얘기는 카드 말고 의사 선생님한테 물어봐야 해! 다른 고민이면 언제든 같이 보자!",rion:"건강에 관한 고민은 카드보다 의료진과 이야기 나누는 게 맞아요. 다른 마음의 고민이라면 천천히 함께 볼게요."}[master];
+  s.innerHTML=`<div class="mvoice" style="margin-inline:-16px"><img src="${A(M().sp.care)}" alt="${M().ko}" data-m="${master}"><div class="bubble v-${master}"><span class="who">${M().ko}</span><p>${line}</p></div></div>
+  <p>묘타로는 건강·질병에 관한 타로는 보지 않아요. 이 상담은 결제되지 않았어요.</p>`;
+  $("stage").hidden=true;s.scrollIntoView({behavior:"smooth",block:"start"});
+}
+function crisisView(){
+  const s=$("safetyBox");s.hidden=false;s.className="safety";
+  const careLine={noel:"이 고민은 카드로 판단할 일이 아닙니다. 지금은 사람의 도움이 먼저입니다. 혼자 버티지 마십시오.",haku:"잠깐만, 이건 카드보다 지금 네 얘기를 들어줄 사람이 먼저야. 혼자 참지 않아도 돼. 진짜로.",rion:"이 고민은 카드보다 지금 곁에서 이야기를 들어줄 사람이 먼저 필요해 보여요. 혼자 견디지 않아도 괜찮아요."}[master];
+  s.innerHTML=`<div class="mvoice" style="margin-inline:-16px"><img src="${A(M().sp.care)}" alt="${M().ko}" data-m="${master}"><div class="bubble v-${master}"><span class="who">${M().ko}</span><p>${careLine}</p></div></div>
+  <p>24시간 이야기를 들어주는 곳이 있어요. 이 상담은 결제되지 않았어요.</p>
+  <p>자살예방상담전화 <span class="tel">109</span></p><p>정신건강위기상담전화 <span class="tel">1577-0199</span></p>
+  <p class="notice">급한 위험이 있다면 112 또는 119에 바로 연락해 주세요.</p>`;
+  $("stage").hidden=true;s.scrollIntoView({behavior:"smooth",block:"start"});
+}
+function rand(n){const a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%n}
+function drawFour(){const pool=Object.keys(tarotData).map(Number),out=[];while(out.length<4){const n=pool.splice(rand(pool.length),1)[0];out.push(n)}return out}
+
+/* per-master narration: order 2 → 1 → 3 → 4 */
+const LENS={
+  noel:{
+    intro:q=>`“${q}” 결론부터 보겠습니다. 감정은 잠시 내려놓으십시오.`,
+    p2:c=>`현재는 ${c.name}. ${c.one}의 카드입니다. 지금 쥐고 있는 무기는 ‘${c.gift}’. 이미 가진 것부터 계산하십시오.`,
+    p1:c=>`바탕은 ${c.name}. 빠진 조건이 하나 보입니다. ${qj(c.needs,"이","가")} 없습니다. 판단은 그걸 채운 다음입니다.`,
+    p3:c=>`가까운 흐름은 ${c.name}. 위험 요소는 이겁니다. ${first(c.caution)} 대비하면 변수, 방치하면 손실입니다.`,
+    p4:c=>`기준은 하나면 충분합니다. ${c.name}, ‘${c.gift}’. ${V(c.daily,"noel")}`,
+    sum:(c,q)=>`정리합니다. 현재 자원은 ${c[2].name}의 ‘${c[2].gift}’. 빠진 조건은 ${c[1].name}의 ‘${c[1].needs}’. 곧 ${c[3].name}의 흐름이 옵니다. 결정 기준은 ${c[4].name}의 ‘${c[4].gift}’입니다. 오늘 답할 질문은 하나. ${c[4].ask}`,
+    sp:["read","think","firm","advice"]},
+  haku:{
+    intro:q=>`“${q}” 오케이, 같이 보자! 카드 뭐 나올지 나 벌써 두근두근해!`,
+    p2:c=>`짠! 지금 자리엔 ${j(c.name,"이야","야")}! ${c.one}… 이거 완전 너잖아? 네 안의 ‘${c.gift}’, 벌써 움직이고 있다니까!`,
+    p1:c=>`밑바탕엔 ${j(c.name,"이","가")} 있어. ‘${c.needs}’만 채우면 훨씬 가벼워질 거야. 이건 약점 아니고 연료야, 연료!`,
+    p3:c=>`곧 올 흐름은 ${j(c.name,"이야","야")}! 기회 냄새 난다~ 딱 하나만 조심하자. ${first(c.caution)}`,
+    p4:c=>`마지막 조언 카드는 ${j(c.name,"이야","야")}. 내 추천은 이거! ${V(c.daily,"haku")}`,
+    sum:(c,q)=>`한 줄 요약 간다! 너는 지금 ${c[2].name}의 ${qj(c[2].gift,"을","를")} 이미 갖고 있어. ${j(c[1].name,"이","가")} 말한 ‘${c[1].needs}’만 챙기면, ${c[3].name}의 흐름은 무조건 기회야. 오늘의 미션! ${c[4].ask}`,
+    sp:["offer","think","read","advice"]},
+  rion:{
+    intro:q=>`“${q}”… 적어 주셔서 고마워요. 서두르지 않을게요. 마음의 결부터 천천히 볼게요.`,
+    p2:c=>`지금 마음 자리에 ${j(c.name,"이","가")} 놓였어요. ${c.one}… 혹시 요즘 ${qj(c.gift,"으로","로")} 겨우 버티고 있진 않았나요?`,
+    p1:c=>`조금 더 깊은 곳에는 ${c.name}. 말하지 못한 바람이 있었던 것 같아요. ${qj(c.needs,"을","를")} 바라는 마음이요.`,
+    p3:c=>`가까운 시간에는 ${c.name}의 기운이 다가와요. ${first(c.caution)} 그래도 괜찮아요. 그땐 잠깐 쉬어 가도 돼요.`,
+    p4:c=>`마지막으로 ${j(c.name,"이","가")} 조용히 건네는 말이 있어요. ${V(c.daily,"rion")}`,
+    sum:(c,q)=>`지금의 당신은 ${c[2].name}처럼 ${qj(c[2].gift,"을","를")} 붙잡고 있고, 마음 깊은 곳에서는 ${c[1].name}의 ${qj(c[1].needs,"을","를")} 바라고 있어요. ${c[3].name}의 시간이 오면 속도를 조금 늦춰도 괜찮아요. 오늘 밤, 이 질문을 가만히 품어 보세요. ${c[4].ask}`,
+    sp:["read","think","advice","care"]}
+};
+const ORDER=[2,1,3,4];
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function setSprite(key,mk=master){const img=$("stageSprite");img.style.opacity=0;setTimeout(()=>{img.src=A(MASTERS[mk].sp[key]);img.alt=MASTERS[mk].ko;img.dataset.m=mk;img.style.opacity=1},180)}
+$("payButton").addEventListener("click",async()=>{
+  const q=$("deepQuestion").value.trim();
+  if(q.length<5){$("deepError").textContent="고민을 5자 이상 적어 주세요.";return}
+  $("deepError").textContent="";
+  if(CRISIS.test(q)){crisisView();return}
+  if(HEALTH.test(q)){paid=false;renderPrice();healthView();return}
+  $("safetyBox").hidden=true;
+  if(!paid){paid=true;renderPrice();toast(`테스트 결제 완료 · ${won(PRICE_BASE)}`);return}
+  startReading(q);
+});
+async function startReading(q){
+  paid=false;renderPrice();$("payButton").disabled=true;
+  const draw=drawFour(),cards={1:draw[0],2:draw[1],3:draw[2],4:draw[3]};
+  reading={id:Date.now().toString(36),q,cards,master,current:master,switched:[],used:new Set(draw),extras:[],saved:false,topic:(document.querySelector("#topics [aria-pressed=true]")||{}).textContent||"",pub:$("pubCheck").checked};
+  frames=framesFor(master,false);
+  const st=$("stage");st.hidden=false;$("stageActions").replaceChildren();$("extras").replaceChildren();$("extras").hidden=true;$("fuBox").hidden=true;
+  $("board").hidden=true;$("deck").hidden=false;
+  dealing=true;show(0);
+  st.scrollIntoView({behavior:"smooth",block:"start"});
+  await sleep(1500);
+  $("deck").hidden=true;$("board").hidden=false;setSprite("offer");
+  document.querySelectorAll(".slot").forEach(s=>{s.classList.remove("in","focus");drawCard(s.querySelector(".tcard"),cards[s.dataset.pos])});
+  for(const p of [1,2,3,4]){await sleep(p===4?520:340);document.querySelector(`.slot[data-pos="${p}"]`).classList.add("in")}
+  await sleep(400);$("payButton").disabled=false;dealing=false;
+  show(1);
+}
+/* reading timeline: every line the masters say is a frame; 이전/다음 move through it */
+let frames=[],fi=0,dealing=false;
+const cardLabel=n=>`${roman[n]} · ${tarotData[n].name}`;
+function framesFor(mk,switched){
+  const L=LENS[mk],c=reading.cards,f=[];
+  f.push({mk,sp:"think",step:switched?`${MASTERS[mk].ko}의 시선으로 · 같은 카드`:"",text:L.intro(reading.q),focus:0});
+  ORDER.forEach((pos,i)=>f.push({mk,sp:L.sp[i],step:cardLabel(c[pos]),text:L["p"+pos](tarotData[c[pos]]),focus:pos}));
+  const cc={1:tarotData[c[1]],2:tarotData[c[2]],3:tarotData[c[3]],4:tarotData[c[4]]};
+  const notes=[];if(PRO.test(reading.q))notes.push("돈·법률과 관련된 결정은 카드 해석만으로 정하지 말고 꼭 전문가와 상의해 주세요.");
+  notes.push("프로토타입 해석은 규칙 기반 문장이에요. 정식 서비스에서는 AI가 고민 내용을 반영해 해석해요.");
+  f.push({mk,sp:"hello",step:`${MASTERS[mk].ko}의 종합 해석`,text:L.sum(cc,reading.q),focus:0,notes,end:true});
+  return f;
+}
+function show(i){
+  fi=i;const fr=frames[i];reading.current=fr.mk;
+  setSprite(fr.sp,fr.mk);
+  $("stageBubble").className="bubble v-"+fr.mk;$("stageStep").textContent=fr.step||"";$("stageStep").hidden=!fr.step;$("stageWho").textContent=MASTERS[fr.mk].ko;$("stageText").textContent=fr.text;
+  $("stageNotes").replaceChildren(...(fr.notes||[]).map(t=>el("p","notice",t)));
+  document.querySelectorAll(".slot").forEach(s=>s.classList.toggle("focus",+s.dataset.pos===fr.focus));
+  $("board").classList.toggle("reading",!!fr.focus&&!fr.extra);$("extras").classList.toggle("reading",!!fr.extra);
+  document.querySelectorAll(".extra").forEach(x=>x.classList.toggle("focus",+x.dataset.i===fr.extra));
+  if(fr.end&&fr.mk===reading.master&&!reading.saved){reading.saved=true;saveMine();toast(reading.pub?"상담 게시판에 익명으로 올라갔어요":"내 상담에 저장했어요 · 비공개")}
+  renderNav();
+  if(i>0)$("stageVoice").scrollIntoView({behavior:"smooth",block:"start"});
+}
+function renderNav(){
+  const box=$("stageActions");if(dealing){box.replaceChildren();return}
+  const nav=el("div","navrow");
+  const prev=el("button","btn btn-ghost","‹ 이전");prev.type="button";prev.disabled=fi===0;prev.addEventListener("click",()=>show(fi-1));
+  const atEnd=fi===frames.length-1;
+  const next=el("button","btn btn-gold",atEnd?"다음 ›":(frames[fi+1].end&&!frames[fi+1].extra?"종합 해석 보기 ›":"다음 ›"));next.type="button";next.disabled=atEnd;next.addEventListener("click",()=>show(fi+1));
+  nav.append(prev,next);
+  const items=[nav];
+  if(atEnd&&frames[fi].end){$("fuBox").hidden=true;items.push(...actionButtons())}
+  box.replaceChildren(...items);
+}
+/* add-ons within the same question: 500원 each */
+function actionButtons(){
+  const mk=reading.current;
+  const fu=el("button","btn btn-gold",`추가 질문하기 · ${won(PRICE_ADD)}`);fu.type="button";fu.addEventListener("click",openFollowUp);
+  const others=Object.keys(MASTERS).filter(k=>k!==mk&&k!==reading.master&&!reading.switched.includes(k));
+  const acts=others.map(k=>{const b=el("button","btn btn-ghost",`${MASTERS[k].ko}${k==="rion"?"으로":"로"} 다시 보기 · ${won(PRICE_ADD)}`);b.type="button";b.addEventListener("click",()=>{reading.switched.push(k);toast(`테스트 결제 완료 · ${won(PRICE_ADD)}`);$("fuBox").hidden=true;const start=frames.length;frames.push(...framesFor(k,true));show(start)});return b});
+  const again=el("button","btn btn-quiet",`새 질문하기 · ${won(PRICE_BASE)}`);again.type="button";again.addEventListener("click",()=>{$("stage").hidden=true;$("fuBox").hidden=true;$("deepQuestion").value="";qc();$("deepQuestion").focus();window.scrollTo({top:0,behavior:"smooth"});toast("새로운 고민은 990원 상담으로 시작해요")});
+  return [fu,...acts,again];
+}
+function guessPos(t){if(/언제|앞으로|미래|다음|곧|결과|될까|어떻게 될/.test(t))return 3;if(/왜|이유|원인|배경|속마음|진짜/.test(t))return 1;if(/어떻게 하|방법|해야|조언|무엇을|뭘/.test(t))return 4;return 2}
+function openFollowUp(){
+  const box=$("fuBox");box.hidden=false;
+  const mk=reading.current;
+  box.innerHTML=`<h3>${MASTERS[mk].ko}에게 이어서 묻기</h3>
+  <div class="field"><label for="fuQ">같은 고민에 대한 추가 질문</label><textarea class="input" id="fuQ" maxlength="120" style="min-height:80px" placeholder="이어서 궁금한 점을 적어 주세요."></textarea></div>
+  <div class="field"><span style="font-size:12.5px;font-weight:700;color:var(--muted)">어떤 카드에 이어서 한 장 더 뽑을까요?</span><div class="topics" id="fuPos" role="group" aria-label="이어서 볼 카드">${ORDER.map(p=>`<button type="button" data-pos="${p}" aria-pressed="${p===2}">${tarotData[reading.cards[p]].name}</button>`).join("")}</div><span class="hint" id="fuHint">질문을 적으면 어울리는 카드를 먼저 골라 드려요.</span></div>
+  <p class="err" id="fuErr"></p>
+  <button class="btn btn-gold" type="button" id="fuGo">${won(PRICE_ADD)} 테스트 결제 · 카드 한 장 더</button>
+  <p class="add-price">질문 주제가 완전히 바뀌면 새 질문(990원)으로 시작해 주세요.</p>`;
+  let pos=2,touched=false;
+  const setPos=p=>{pos=p;box.querySelectorAll("#fuPos button").forEach(b=>b.setAttribute("aria-pressed",String(+b.dataset.pos===p)))};
+  box.querySelectorAll("#fuPos button").forEach(b=>b.addEventListener("click",()=>{touched=true;setPos(+b.dataset.pos)}));
+  $("fuQ").addEventListener("input",()=>{if(touched)return;const g=guessPos($("fuQ").value);setPos(g);$("fuHint").textContent=`질문 내용으로 보면 ‘${tarotData[reading.cards[g]].name}’ 카드에 이어 보는 게 어울려요. 바꿔도 돼요.`});
+  $("fuGo").addEventListener("click",()=>{
+    const fq=$("fuQ").value.trim();if(fq.length<4){$("fuErr").textContent="추가 질문을 4자 이상 적어 주세요.";return}
+    if(CRISIS.test(fq)){crisisView();return}
+    if(HEALTH.test(fq)){$("fuErr").textContent="건강·질병에 관한 질문은 타로로 보지 않아요. 의료진과 상담해 주세요.";return}
+    $("fuErr").textContent="";toast(`테스트 결제 완료 · ${won(PRICE_ADD)}`);box.hidden=true;drawExtra(fq,pos);
+  });
+  $("fuQ").focus();box.scrollIntoView({behavior:"smooth",block:"center"});
+}
+const FOLLOW={
+  noel:(fq,o,x)=>`“${fq}” ${o.name} 옆에 한 장 더 놓았습니다. ${x.name}. 답은 ‘${x.gift}’ 쪽입니다. 단, ${first(x.caution)} 이것만 확인하고 움직이십시오.`,
+  haku:(fq,o,x)=>`“${fq}” 좋아, 한 장 더! ${o.name} 옆에 ${j(x.name,"이","가")} 왔어! ${qj(x.gift,"을","를")} 믿어 봐. ${V(x.daily,"haku")}`,
+  rion:(fq,o,x)=>`“${fq}”… 그 마음을 따라 ${o.name} 곁에 한 장을 더 펼쳐 봤어요. ${j(x.name,"이","가")} 다가왔네요. ${x.one}… ${qj(x.needs,"을","를")} 조금 더 챙겨 주면 좋겠어요.`
+};
+async function drawExtra(fq,pos){
+  const pool=Object.keys(tarotData).map(Number).filter(n=>!reading.used.has(n));
+  const n=pool[rand(pool.length)];reading.used.add(n);reading.extras.push({fq,pos,n});
+  const k=reading.extras.length,mk=reading.current,o=tarotData[reading.cards[pos]],x=tarotData[n];
+  dealing=true;renderNav();
+  document.querySelectorAll(".slot").forEach(s=>s.classList.toggle("focus",+s.dataset.pos===pos));
+  setSprite("think",mk);await sleep(700);
+  const ex=el("div","extra");ex.dataset.i=k;const c=el("div");drawCard(c,n);ex.append(c,el("b","",`추가 질문 ${k}`));
+  $("extras").hidden=false;$("extras").append(ex);
+  await sleep(500);dealing=false;
+  frames.push({mk,sp:"read",step:`추가 질문 ${k} · ${cardLabel(n)}`,text:FOLLOW[mk](fq,o,x),focus:pos,extra:k,end:true});
+  show(frames.length-1);reading.extras[reading.extras.length-1].text=FOLLOW[mk](fq,o,x);saveMine();
+}
+/* ---------- reading board ---------- */
+function renderPub(){const on=$("pubCheck").checked;$("pubTitle").textContent=on?"상담 게시판에 공개 · 켜짐":"나만 보기 · 공개 꺼짐";$("pubSub").textContent=on?"상담이 끝나면 닉네임 없이 익명으로 게시판에 올라가요. 공개를 원하지 않으면 스위치를 꺼 주세요.":"게시판에 올라가지 않고 내 상담에만 남아요. 나중에 내 상담에서 공개로 바꿀 수 있어요."}
+$("pubCheck").addEventListener("change",renderPub);
+const BKEY="myotarot_board_v1";
+const SEED=[
+  {id:"s1",topic:"관계",m:"rion",q:"3년 된 친구와 사소한 일로 연락이 끊겼어요. 먼저 연락해도 될까요?",cards:{1:3,2:7,3:14,4:18},ago:2},
+  {id:"s2",topic:"커리어",m:"noel",q:"지금 회사에 남을지, 이직을 준비할지 고민이에요.",cards:{1:5,2:12,3:21,4:9},ago:5},
+  {id:"s3",topic:"선택",m:"haku",q:"올겨울에 혼자 긴 여행을 떠나도 괜찮을까?",cards:{1:1,2:20,3:10,4:17},ago:26},
+  {id:"s4",topic:"앞으로의 흐름",m:"noel",q:"올해 남은 두 달, 어떤 마음으로 보내면 좋을까요?",cards:{1:8,2:2,3:19,4:11},ago:50}
+].map(p=>({...p,pub:true,extras:[],t:Date.now()-p.ago*3600e3}));
+let bTab="all",bFilter="";
+function saveMine(){
+  const list=store.get(BKEY,[]).filter(p=>p.id!==reading.id);
+  list.unshift({id:reading.id,topic:reading.topic,m:reading.master,q:reading.q,cards:reading.cards,extras:reading.extras.map(x=>({fq:x.fq,n:x.n,text:x.text})),pub:reading.pub,t:Date.now(),mine:true});
+  store.set(BKEY,list.slice(0,20));renderBoard();
+}
+function ago(t){const m=Math.floor((Date.now()-t)/6e4);if(m<1)return"방금";if(m<60)return`${m}분 전`;const h=Math.floor(m/60);if(h<24)return`${h}시간 전`;return`${Math.floor(h/24)}일 전`}
+function postEl(p){
+  const L=LENS[p.m],c=p.cards,cc={1:tarotData[c[1]],2:tarotData[c[2]],3:tarotData[c[3]],4:tarotData[c[4]]},mm=MASTERS[p.m];
+  const art=el("article","post");art.dataset.master=p.m;
+  const meta=el("div","post-meta");const face=el("img");face.src=A("face-"+p.m);face.alt="";
+  meta.append(face,el("b","",`${mm.ko}의 리딩`),el("span","",[p.topic,ago(p.t)].filter(Boolean).join(" · ")));
+  if(p.mine)meta.append(el("span","post-state",p.pub?"공개":"나만 보기"));
+  const cards=el("div","chips");cards.append(...ORDER.map(pos=>el("span","",cc[pos].name)));
+  const det=el("details","post-more");det.append(el("summary","","카드별 리딩 보기"));
+  ORDER.forEach(pos=>{const d=el("div","post-line");d.append(el("b","",cardLabel(c[pos])),el("p","",L["p"+pos](cc[pos])));det.append(d)});
+  (p.extras||[]).forEach((x,i)=>{const d=el("div","post-line");d.append(el("b","",`추가 질문 ${i+1} · ${cardLabel(x.n)}`),el("p","",x.text||""));det.append(d)});
+  art.append(meta,el("p","post-q",p.q),cards,el("p","post-sum",L.sum(cc,p.q)),det);
+  if(p.mine){const b=el("button","btn btn-quiet post-toggle",p.pub?"비공개로 바꾸기":"게시판에 공개하기");b.type="button";
+    b.addEventListener("click",()=>{const list=store.get(BKEY,[]);const it=list.find(x=>x.id===p.id);if(it){it.pub=!it.pub;store.set(BKEY,list);toast(it.pub?"게시판에 익명으로 공개했어요":"비공개로 바꿨어요");renderBoard()}});art.append(b)}
+  return art;
+}
+function renderBoard(){
+  const mine=store.get(BKEY,[]);
+  document.querySelectorAll("#boardTabs button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.bt===bTab)));
+  document.querySelectorAll("#boardFilter button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.bf===bFilter)));
+  let list=bTab==="mine"?mine:[...mine.filter(p=>p.pub),...SEED];
+  if(bFilter)list=list.filter(p=>p.m===bFilter);
+  list.sort((a,b)=>b.t-a.t);
+  const box=$("posts");
+  if(!list.length){box.replaceChildren(el("p","notice",bTab==="mine"?"아직 상담 기록이 없어요. 고민 상담을 마치면 여기에 남아요.":"아직 올라온 상담이 없어요."));return}
+  box.replaceChildren(...list.map(postEl));
+}
+document.querySelectorAll("#boardTabs button").forEach(b=>b.addEventListener("click",()=>{bTab=b.dataset.bt;renderBoard()}));
+document.querySelectorAll("#boardFilter button").forEach(b=>b.addEventListener("click",()=>{bFilter=b.dataset.bf;renderBoard()}));
+
+
+/* ---------- network + ranking (top 21) ---------- */
+const NKEY="myotarot_network_v10";
+let friends=(store.get(NKEY,[])||[]).filter(f=>!f.ex);
+const GOAL=5,TOP=21;
+function mySoul(){return soulOf($("mateBirth").value)||soulOf($("birthDate").value)||0}
+function myName(){return $("mateName").value.trim()||$("visitorName").value.trim()}
+function ownerName(){return myName()}
+function rankedFriends(){const me=mySoul();return friends.map(f=>({...f,n:f.n||soulOf(f.birth)})).filter(f=>f.n).map(f=>({...f,score:me?pairScore(me,f.n):0})).sort((a,b)=>b.score-a.score)}
+function openPair(f){const me=mySoul();if(!me){$("mateErr").textContent="내 생년월일을 먼저 넣어 주세요.";$("mateBirth").focus();return}$("mateErr").textContent="";runPair({name:myName()||"나",number:me},{name:f.name,number:f.n})}
+function renderNet(){
+  const me=mySoul(),nm=myName(),all=rankedFriends(),list=all.slice(0,TOP);
+  /* ranking */
+  $("rankNote").textContent=all.length>TOP?`전체 ${all.length}명 중 상위 ${TOP}명`:`상위 ${TOP}명까지 보여요`;
+  if(!list.length)$("vaultList").replaceChildren(el("li","empty","아직 도착한 친구가 없어요. 친구에게 생일을 물어보세요."));
+  else $("vaultList").replaceChildren(...list.map((f,i)=>{const li=el("li","vitem");const mid=el("button","vmid");mid.type="button";mid.append(el("div","nm",f.name),el("div","sub",`${tarotData[f.n].name}${me?" · "+pairNickname(me,f.n):""}`));mid.addEventListener("click",()=>openPair(f));
+    const del=el("button","del","×");del.type="button";del.setAttribute("aria-label",`${f.name} 지우기`);del.addEventListener("click",()=>{friends=friends.filter(x=>!(x.name===f.name&&(x.n||soulOf(x.birth))===f.n));store.set(NKEY,friends);renderNet()});
+    li.append(el("span","rank",i+1),mid,el("span","pts",me?f.score:"–"),del);return li}));
+  /* map: top 7 on the inner ring with names, 8–21 on the outer ring */
+  const cx=180,cy=180,svg=[`<defs><radialGradient id="meg"><stop offset="0" stop-color="#F2DFA8"/><stop offset="1" stop-color="#C99E4C"/></radialGradient></defs>`];
+  const inner=list.slice(0,7),outer=list.slice(7);
+  const ring=(arr,R,off)=>arr.map((f,i)=>{const a=-Math.PI/2+off+i*2*Math.PI/Math.max(arr.length,1);return{f,a,x:cx+R*Math.cos(a),y:cy+R*Math.sin(a)}});
+  const P1=ring(inner,92,0),P2=ring(outer,152,Math.PI/Math.max(outer.length,1));
+  [...P2,...P1].forEach(p=>{const t=me?(p.f.score-58)/39:.3;svg.push(`<line x1="${cx}" y1="${cy}" x2="${p.x.toFixed(1)}" y2="${p.y.toFixed(1)}" stroke="#D9B464" stroke-opacity="${(.15+t*.6).toFixed(2)}" stroke-width="${(.8+t*3.5).toFixed(1)}"/>`)});
+  P2.forEach(p=>svg.push(`<g><title>${p.f.name} · ${tarotData[p.f.n].name}${me?" · "+p.f.score+"점":""}</title><circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="11" fill="#1C1C24" stroke="#8C7A50"/><text x="${p.x.toFixed(1)}" y="${(p.y+4).toFixed(1)}" text-anchor="middle" font-size="10" fill="#CFC7B6">${p.f.name.slice(0,1)}</text></g>`));
+  P1.forEach(p=>{const lx=cx+(92+34)*Math.cos(p.a),ly=cy+(92+34)*Math.sin(p.a);svg.push(`<g><circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="19" fill="#1C1C24" stroke="#D9B464"/><text x="${p.x.toFixed(1)}" y="${(p.y+6).toFixed(1)}" text-anchor="middle" font-size="15" fill="#F2DFA8">${tarotData[p.f.n].art}</text><text x="${lx.toFixed(1)}" y="${(ly-2).toFixed(1)}" text-anchor="middle" font-size="11.5" font-weight="700" fill="#F6F1E4">${p.f.name}</text>${me?`<text x="${lx.toFixed(1)}" y="${(ly+11).toFixed(1)}" text-anchor="middle" font-size="10.5" fill="#B4AC9C">${p.f.score}점</text>`:""}</g>`)});
+  svg.push(`<circle cx="${cx}" cy="${cy}" r="30" fill="url(#meg)"/><text x="${cx}" y="${cy+8}" text-anchor="middle" font-size="21" fill="#1A140A">${me?tarotData[me].art:"?"}</text><text x="${cx}" y="${cy+46}" text-anchor="middle" font-size="12" font-weight="800" fill="#F6F1E4">${nm||"나"}${me?" · "+tarotData[me].name:""}</text>`);
+  if(!list.length)svg.push(`<text x="${cx}" y="340" text-anchor="middle" font-size="12" fill="#8A8475">생일을 보내 준 친구가 여기에 나타나요</text>`);
+  $("netMap").innerHTML=svg.join("");
+  /* share promo */
+  const real=all.length,got=Math.min(real,GOAL);
+  $("promoDots").replaceChildren(...Array.from({length:GOAL},(_,i)=>el("span",i<got?"on":"",i<got?"✓":String(i+1))));
+  $("promoDots").setAttribute("aria-label",`친구 ${got}명 / ${GOAL}명`);
+  $("promo").classList.toggle("done",real>=GOAL);
+  $("netCount").textContent=real>=GOAL?"990원 고민 상담 무료 쿠폰을 받았어요!":`${GOAL-got}명만 더 확인하면 무료 상담을 받아요`;
+  $("promoShare").textContent=real>=GOAL?"무료 상담 받으러 가기":"내 링크 공유하고 무료 상담 받기";
+}
+function inviteText(){return askText()}
+$("promoShare").addEventListener("click",()=>{if(friends.length>=GOAL){showView("deep");toast("무료 쿠폰은 정식 서비스에서 결제 단계에 적용돼요");return}copyText(inviteText())});
+document.querySelector('.tab[data-view="compat"]').addEventListener("click",renderNet);
+
+/* ---------- birthday request (생일 물어보기) ---------- */
+const ASKID=(()=>{let v=store.get("myotarot_askid","");if(!v){v=Math.random().toString(36).slice(2,8);store.set("myotarot_askid",v)}return v})();
+/* the short link carries only an id; the server looks up who asked (name + soul card, never the birth date) */
+/* no server: links carry only a nickname and a soul-card number (never the birth date) in the URL hash */
+const SITE="https://heranzang.github.io/myotarot/";
+function siteBase(){return /github\.io$/.test(location.hostname)?location.origin+location.pathname:SITE}
+const b64e=o=>btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(o)))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+const b64d=t=>{t=t.replace(/-/g,"+").replace(/_/g,"/");return JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(t),c=>c.charCodeAt(0))))};
+function askLink(){return siteBase()+"#m="+b64e({id:ASKID,f:myName(),s:mySoul()})}
+function replyLink(name,n){return siteBase()+"#r="+b64e({to:land.id,f:name,c:n})}
+function saveMe(){store.set("myotarot_me",{name:$("mateName").value.trim(),birth:$("mateBirth").value})}
+function askText(){return `생일 입력해 줘! 우리 둘 소울메이트 궁합 보려고.\n생년월일은 나한테 안 보이고, 소울카드만 와.\n${askLink()}`}
+function meReady(){return !!($("mateName").value.trim()&&soulOf($("mateBirth").value))}
+function needMe(){
+  if(meReady()){$("mateErr").textContent="";return false}
+  const nm=$("mateName").value.trim(),b=$("mateBirth").value.trim();
+  $("mateErr").textContent=!nm&&!b?"내 닉네임과 생년월일을 먼저 입력해 주세요. 그래야 친구가 생일을 넣었을 때 둘의 궁합이 바로 나와요.":!nm?"내 닉네임을 입력해 주세요.":"내 생년월일 8자리를 확인해 주세요.";
+  (nm?$("mateBirth"):$("mateName")).focus();return true}
+function renderAsk(){$("askMsg").textContent=askText();const ok=meReady();["askShare","askPreview"].forEach(id=>$(id).setAttribute("aria-disabled",String(!ok)));if(ok)$("mateErr").textContent=""}
+$("askShare").addEventListener("click",async()=>{if(needMe())return;saveMe();const text=askText();if(navigator.share){try{await navigator.share({text});return}catch(e){if(e&&e.name==="AbortError")return}}copyText(text);toast("복사했어요. 친구에게 보내 주세요")});
+/* friend landing */
+let land=null;
+function openLanding(o,preview){
+  land={id:o.id||"",from:String(o.f||"친구").slice(0,8),s:(+o.s>=1&&+o.s<=22)?+o.s:0,preview};
+  const L=$("askLand");L.hidden=false;$("askLandResult").hidden=true;$("askLandForm").hidden=false;$("askErr").textContent="";$("askName").value="";$("askBirth").value="";
+  $("askLandH").textContent=`${land.from}님이 생일을 물어봤어요`;
+  $("askLandLead").textContent=`생일을 입력하면 내 소울카드와 ${land.from}님과의 소울메이트 궁합을 바로 볼 수 있어요.`;
+  $("askClose").hidden=!preview;showView("compat");setTimeout(()=>{L.scrollIntoView({behavior:"smooth",block:"start"});$("askName").focus({preventScroll:true})},350);
+}
+$("askBirth").addEventListener("input",()=>{const b=$("askBirth"),s=digits(b.value);b.value=s.length>6?`${s.slice(0,4)}.${s.slice(4,6)}.${s.slice(6)}`:s.length>4?`${s.slice(0,4)}.${s.slice(4)}`:s});
+$("askSubmit").addEventListener("click",()=>{
+  const name=$("askName").value.trim(),n=soulOf($("askBirth").value);
+  if(!name){$("askErr").textContent="이름을 적어 주세요.";$("askName").focus();return}
+  if(!n){$("askErr").textContent="생년월일 8자리를 확인해 주세요.";$("askBirth").focus();return}
+  $("askErr").textContent="";
+  /* preview: the answer lands in this same browser. real link: the friend keeps the asker as their own mate and sends a reply link back */
+  if(land.preview){friends=friends.filter(f=>f.name!==name);friends.unshift({name,n});store.set(NKEY,friends)}
+  else if(land.s){friends=friends.filter(f=>f.name!==land.from);friends.unshift({name:land.from,n:land.s});store.set(NKEY,friends);if(!$("mateName").value)$("mateName").value=name;if(!$("mateBirth").value)$("mateBirth").value=$("askBirth").value;saveMe()}
+  const c=tarotData[n],box=$("askLandResult");box.replaceChildren();
+  const head=el("div","askres");const cd=el("div");drawCard(cd,n);const tx=el("div");tx.append(el("span","eyebrow",`${roman[n]} · 나의 소울카드`),el("b","",c.name),el("p","",c.one));head.append(cd,tx);box.append(head);
+  if(land.s){const d=el("div","askpair");const top=el("div","vault-head");top.append(el("b","",`${name} × ${land.from} · ${pairNickname(n,land.s)}`),el("span","pts",String(pairScore(n,land.s))));d.append(top,el("span","",pairPlusText(n,land.s,name,land.from)));box.append(d)}
+  else box.append(el("p","hint",`${land.from}님이 소울카드를 확인하면 둘의 궁합이 열려요.`));
+  const back=el("button","btn btn-gold",`${land.from}님에게 결과 돌려보내기`);back.type="button";
+  back.addEventListener("click",async()=>{const text=`${land.from}! 나 생일 입력했어. 우리 소울메이트 궁합 확인해 봐!\n${replyLink(name,n)}`;
+    if(land.preview){toast(`${land.from}님 랭킹에 ${name}님이 들어왔어요`);return}
+    if(navigator.share){try{await navigator.share({text});return}catch(e){if(e&&e.name==="AbortError")return}}copyText(text);toast(`복사했어요. ${land.from}님에게 보내 주세요`)});
+  box.append(back,el("p","hint",`돌려보내야 ${land.from}님 랭킹에 ${name}님이 들어가요. 링크에는 이름과 소울카드(${c.name})만 담기고, 생년월일은 담기지 않아요.`));
+  const row=el("div","btn-row");const mine=el("button","btn btn-ghost","나도 친구 생일 물어보기");mine.type="button";
+  mine.addEventListener("click",()=>{$("askLand").hidden=true;if(!$("mateName").value)$("mateName").value=name;if(!$("mateBirth").value)$("mateBirth").value=$("askBirth").value;renderAsk();renderNet();$("mateMe").scrollIntoView({behavior:"smooth",block:"start"})});
+  const soul=el("button","btn btn-ghost","내 소울카드 자세히 보기");soul.type="button";soul.addEventListener("click",()=>{$("askLand").hidden=true;$("visitorName").value=name;$("birthDate").value=$("askBirth").value;showView("soul");calcSoul()});
+  row.append(mine,soul);box.append(row);
+  $("askLandForm").hidden=true;box.hidden=false;renderNet();
+});
+$("askPreview").addEventListener("click",()=>{if(needMe())return;openLanding({id:ASKID,f:myName(),s:mySoul()},true)});
+/* reply link opened by the asker: the friend joins the ranking */
+function takeReply(o){
+  const name=String(o.f||"").slice(0,8),n=+o.c;if(!name||!(n>=1&&n<=22))return;
+  friends=friends.filter(f=>f.name!==name);friends.unshift({name,n});store.set(NKEY,friends);
+  showView("compat");renderNet();toast(`${name}님이 소울메이트 랭킹에 들어왔어요`);
+  if(meReady())setTimeout(()=>openPair({name,n}),400);else{$("mateErr").textContent=`${name}님과의 궁합을 보려면 내 닉네임과 생년월일을 입력해 주세요.`}
+}
+function readHash(){
+  const h=location.hash.slice(1),m=h.match(/^([mr])=(.+)$/);if(!m)return false;
+  let o;try{o=b64d(m[2])}catch{return false}
+  try{history.replaceState(null,"",location.pathname+location.search)}catch{}
+  if(m[1]==="m")openLanding(o,false);else takeReply(o);return true}
+window.addEventListener("hashchange",readHash);
+$("askClose").addEventListener("click",()=>{$("askLand").hidden=true;renderNet();$("vaultList").scrollIntoView({behavior:"smooth",block:"center"})});
+
+/* ---------- social proof pop-up (예시 수치) ---------- */
+const PROOF=[
+  {v:"soul",face:"face-noel",t:"오늘 <em>2,418명</em>이 소울카드를 찾았어요",go:"내 소울카드 찾기"},
+  {v:"compat",face:"face-haku",t:"오늘 <em>1,102쌍</em>이 소울메이트를 확인했어요",go:"소울메이트 보기"},
+  {v:"daily",face:"face-rion",t:"오늘 <em>1,634명</em>이 오늘의 운세를 확인했어요",go:"오늘의 운세 보기"},
+  {v:"deep",face:null,t:"오늘 <em>231명</em>이 고민을 상담했어요",go:"고민 상담하기"}
+];
+let ppI=0,ppOff=false,ppTimer=null;
+function curView(){const a=document.querySelector(".view.active");return a?a.id.replace("view-",""):"soul"}
+function showProof(){
+  if(ppOff||$("toast").classList.contains("show")){ppTimer=setTimeout(showProof,4000);return}
+  const v=curView(),order=PROOF.filter(p=>p.v!==v);const p=order[ppI++%order.length];
+  $("ppFace").src=A(p.face||"face-"+master);$("ppText").innerHTML=p.t;$("ppSub").textContent=`${p.go} › · 예시 수치`;$("ppBody").dataset.v=p.v;
+  const el_=$("proofPop");el_.hidden=false;requestAnimationFrame(()=>el_.classList.add("show"));
+  ppTimer=setTimeout(()=>{el_.classList.remove("show");setTimeout(()=>{el_.hidden=true},340);ppTimer=setTimeout(showProof,9000)},5000);
+}
+$("ppBody").addEventListener("click",()=>{const v=$("ppBody").dataset.v;$("proofPop").classList.remove("show");$("proofPop").hidden=true;clearTimeout(ppTimer);ppTimer=setTimeout(showProof,12000);showView(v);window.scrollTo({top:0,behavior:"smooth"})});
+$("ppX").addEventListener("click",()=>{ppOff=true;clearTimeout(ppTimer);$("proofPop").classList.remove("show");setTimeout(()=>{$("proofPop").hidden=true},340)});
+ppTimer=setTimeout(showProof,3500);
+
+/* ---------- boot ---------- */
+selectMaster("noel");renderBoard();
+renderNet();renderAsk();
+(()=>{const me=store.get("myotarot_me",null);if(me){if(!$("mateName").value)$("mateName").value=me.name||"";if(!$("mateBirth").value)$("mateBirth").value=me.birth||"";renderAsk();renderNet()}})();
+if(!readHash())window.scrollTo(0,0);
+</script>
+
+</body>
+</html>
